@@ -75,7 +75,12 @@ EN = {
     "un_done": "Program removed", "un_done_sub": "Thanks for using Converter.",
     "title": APP_TITLE_EN,
 }
-LANG = RU if QLocale.system().language() == QLocale.Language.Russian else EN
+from installer_langs import SLIDES as _OTHER_SLIDES  # noqa: E402
+from installer_langs import STRINGS as _OTHER  # noqa: E402
+
+_CODE = QLocale.system().name().split("_")[0].lower()
+_KINDS = ["files", "color", "sheet", "pdf", "print", "ok"]
+LANG = RU if _CODE == "ru" else _OTHER.get(_CODE, EN)
 
 
 def tt(key: str) -> str:
@@ -123,7 +128,12 @@ SLIDES_EN = [
      "Dark and light themes, Russian and English. New versions appear in the group vk.ru/icc_profil; there is a check in About.",
      ["Start → KopiTehnik Converter", "Command line: Converter.exe --convert <in> <out>", "Remove: Settings → Apps"], "ok"),
 ]
-SLIDES = SLIDES_RU if LANG is RU else SLIDES_EN
+if LANG is RU:
+    SLIDES = SLIDES_RU
+elif LANG is EN:
+    SLIDES = SLIDES_EN
+else:
+    SLIDES = [(t, x, st, k) for (t, x, st), k in zip(_OTHER_SLIDES[_CODE], _KINDS)]
 
 
 # ---------------------------------------------------------------- system work

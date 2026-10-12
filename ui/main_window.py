@@ -29,7 +29,7 @@ from core.sheet import PAPERS, PRESETS, SheetSettings, apply_preset, compose, fi
 from core.loaders import ARCHIVE_EXTS, SUPPORTED_EXTS, is_photo, load_pages
 from core import office
 
-from .i18n import LANGUAGES, tr
+from .i18n import LANGUAGES, system_language, tr
 from .about import AboutDialog
 from .programs import ProgramsDialog, summary
 from .theme import ICONS, PALETTES, stylesheet
@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.store = QSettings()
-        self.lang = self.store.value("lang", "ru")
+        self.lang = self.store.value("lang", system_language())
         if self.lang not in LANGUAGES:
             self.lang = "ru"
         self.theme = self.store.value("theme", "dark")

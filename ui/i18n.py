@@ -1,7 +1,8 @@
 """Interface texts. Add a language by adding a dictionary with the same keys."""
 from __future__ import annotations
 
-LANGUAGES = {"ru": "Русский", "en": "English"}
+LANGUAGES = {"ru": "Русский", "en": "English", "es": "Español", "de": "Deutsch", "fr": "Français",
+             "pt": "Português", "tr": "Türkçe", "zh": "中文"}
 
 TEXTS: dict[str, dict[str, str]] = {
     "ru": {
@@ -549,6 +550,27 @@ TEXTS: dict[str, dict[str, str]] = {
 }
 
 
+from .i18n_de import TEXTS as _de  # noqa: E402
+from .i18n_es import TEXTS as _es  # noqa: E402
+from .i18n_fr import TEXTS as _fr  # noqa: E402
+from .i18n_pt import TEXTS as _pt  # noqa: E402
+from .i18n_tr import TEXTS as _tr  # noqa: E402
+from .i18n_zh import TEXTS as _zh  # noqa: E402
+
+# Other languages list only what differs from English; missing keys fall back to English, then Russian.
+TEXTS.update({"es": _es, "de": _de, "fr": _fr, "pt": _pt, "tr": _tr, "zh": _zh})
+
+
+def system_language() -> str:
+    """Language code for the Windows display language, English when it is not one we have."""
+    try:
+        from PySide6.QtCore import QLocale
+        code = QLocale.system().name().split("_")[0].lower()
+    except Exception:
+        return "en"
+    return code if code in LANGUAGES else "en"
+
+
 def tr(lang: str, key: str, **kw) -> str:
-    text = TEXTS.get(lang, TEXTS["ru"]).get(key) or TEXTS["ru"].get(key, key)
+    text = (TEXTS.get(lang) or {}).get(key) or TEXTS["en"].get(key) or TEXTS["ru"].get(key, key)
     return text.format(**kw) if kw else text
