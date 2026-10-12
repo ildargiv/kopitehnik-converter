@@ -1,0 +1,38 @@
+КопиТехник Конвертор. Лицензии сторонних компонентов
+Third-party software notices
+
+Программа использует следующие свободные библиотеки. Их лицензии сохраняются и не
+меняются условиями лицензии самой программы.
+
+1. Qt 6 / PySide6 (The Qt Company, Qt for Python)
+   Лицензия: GNU Lesser General Public License v3 (LGPL-3.0).
+   Используется как набор отдельных динамических библиотек (DLL), которые можно заменить.
+   Текст лицензии: https://www.gnu.org/licenses/lgpl-3.0.html
+   Исходный код: https://download.qt.io/ , https://code.qt.io/cgit/pyside/pyside-setup.git
+   Модули: QtCore, QtGui, QtWidgets, QtSvg, QtPdf (содержит PDFium, BSD-3-Clause / Apache-2.0),
+   QtPrintSupport.
+
+2. Pillow (Python Imaging Library fork). Лицензия: MIT-CMU (HPND).
+   Copyright (c) 1997-2011 by Secret Labs AB, (c) 1995-2011 by Fredrik Lundh and contributors,
+   (c) 2010 by Jeffrey A. Clark and contributors.
+   https://github.com/python-pillow/Pillow
+   В колёсах Pillow есть libjpeg-turbo, libpng, zlib, FreeType, LittleCMS2, libtiff, libwebp,
+   OpenJPEG и др. под разрешительными лицензиями (BSD, MIT, zlib, FreeType License).
+
+3. pillow-heif (BSD-3-Clause), чтение HEIC/HEIF.
+   Колёса содержат libheif (LGPL-3.0), libde265 (LGPL-3.0) и x265 (GPL-2.0).
+   https://github.com/bigcat88/pillow_heif
+
+4. openpyxl (MIT). https://openpyxl.readthedocs.io
+
+5. PyMuPDF / MuPDF (Artifex Software). Лицензия: GNU AGPL-3.0 или коммерческая лицензия Artifex.
+   https://github.com/pymupdf/PyMuPDF , https://mupdf.com
+   Используется в редакторе PDF и при объединении PDF. Поэтому программа целиком распространяется
+   под GNU AGPL-3.0 (см. LICENSE) с открытым исходным кодом.
+
+6. Python (PSF License) и PyInstaller (GPL-2.0 с исключением, разрешающим выпускать
+   собранные программы под любой лицензией). https://www.python.org , https://pyinstaller.org
+
+7. Необязательно, в «полной» версии: LibreOffice (MPL-2.0 и др.), запускается как отдельная
+   программа для чтения документов Word/PowerPoint. Тексты лицензий лежат в папке LibreOffice.
+   https://www.libreoffice.org
