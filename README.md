@@ -4,6 +4,15 @@
 
 *English: free Windows software for photo labs and print shops. Batch-convert photos and documents to JPG/PNG/TIFF/PDF, colour-correct, lay out multi-photo print sheets (10x15, ID photos, contact sheets), edit PDF and print with preview. It is also an MCP server, so AI agents (Claude, Hermes, Cursor and others) can run the whole workflow through tools. Licence: AGPL-3.0.*
 
+![Цветокоррекция в реальном времени](docs/images/demo.gif)
+
+| Главное окно | Лист 10×15 с метками реза |
+|---|---|
+| ![Главное окно](docs/images/main.png) | ![Лист для печати](docs/images/sheet.png) |
+| ![Цвет](docs/images/color.png) | ![Светлая тема](docs/images/light.png) |
+
+*Скриншоты сделаны на сгенерированных тестовых изображениях.*
+
 ## Зачем он фотоцентру
 Типовой день приёмщика: клиент приносит флешку с HEIC с телефона, PSD, сканы, Word и PDF. Всё нужно привести к одному виду, подправить цвет, разложить на листы 10×15 или фото на документы, поставить метки реза и отправить на принтер. Конвертор делает это одной программой и одним проходом по папке.
 - **Приём любых файлов:** JPG, PNG, WebP, BMP, GIF, TIFF, HEIC, PSD, PDF, SVG, TXT, HTML, XLSX, архивы ZIP (RAR и 7z при установленных 7-Zip или WinRAR), документы Word, PowerPoint и Excel через Microsoft Office или LibreOffice.
