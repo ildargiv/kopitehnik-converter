@@ -56,3 +56,9 @@
 
 ## Лицензия
 Copyright (C) Гайсин Ильдар Вильсурович. Программа свободная, распространяется на условиях GNU Affero General Public License v3 (файл `LICENSE`): её можно бесплатно использовать, изучать, изменять и распространять, исходный код должен оставаться открытым. Лицензии сторонних библиотек: `THIRD_PARTY_NOTICES.txt`.
+
+## Автор
+**Гайсин Ильдар Вильсурович**, разработчик программы, КопиТехник: фотоцентр и профессиональная печать.
+Новости, новые версии и связь: группа ВКонтакте https://vk.ru/icc_profil
+
+*Author: Ildar Gaisin (Gaisin Ildar Vilsurovich), developer of KopiTehnik Converter, a photo lab and professional printing company. News and releases: https://vk.ru/icc_profil*
