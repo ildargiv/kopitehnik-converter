@@ -434,6 +434,11 @@ class PreviewCanvas(QWidget):
     offsetChanged = Signal(float, float)
     filesDropped = Signal(list)
     picked = Signal(float, float)  # normalised position of a white-balance click
+    cropEdited = Signal(float, float, float, float)  # the frame was drawn with the mouse (normalised)
+    cropReset = Signal()                              # double-click: back to the format's own frame
+    cropToggle = Signal()                             # double-click: crop to the frame / back to the frame
+    menuRequested = Signal(object)                    # right-click: global position
+    zoomChanged = Signal(float)
 
     def __init__(self, palette: dict, parent=None):
         super().__init__(parent)
@@ -447,6 +452,25 @@ class PreviewCanvas(QWidget):
         self._drag_start: QPointF | None = None
         self._drag_offset = (0.0, 0.0)
         self.pick_mode = False
+        self.edit_mode = False          # the frame has handles: drag corners, edges or the inside
+        self.lock: float | None = None  # width / height in pixels the frame keeps, None: free
+        self._grab: str | None = None
+        self._new_moved = False
+        self.drew_new = False
+        self.result_mode = False        # the preview is a finished crop, not a frame to edit
+        self.zoom_enabled = False       # wheel zooms, middle or right button pans (the big crop window)
+        self.apply_btn = QPushButton(self)   # "Crop" button that floats at the frame's corner
+        self.apply_btn.setObjectName("primary")
+        self.apply_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.apply_btn.clicked.connect(lambda: self.cropToggle.emit())
+        self.apply_btn.hide()
+        self.zoom = 1.0
+        self.pan = QPointF(0.0, 0.0)
+        self._pan_start: QPointF | None = None
+        self._pan0 = QPointF()
+        self._grab_pos = QPointF()
+        self._grab_crop = (0.0, 0.0, 1.0, 1.0)
+        self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.setMinimumSize(QSize(320, 240))
         self.setMouseTracking(True)
         self.setAcceptDrops(True)
@@ -471,8 +495,15 @@ class PreviewCanvas(QWidget):
         self.message = text
         self.update()
 
+    def set_edit(self, on: bool, lock: float | None = None):
+        self.edit_mode = on
+        self.lock = lock
+        if not self.pick_mode:
+            self.setCursor(Qt.CursorShape.ArrowCursor if on or not self._can_drag() else Qt.CursorShape.OpenHandCursor)
+        self.update()
+
     def _can_drag(self) -> bool:
-        return bool(self.crop) and (self.free[0] > 0.001 or self.free[1] > 0.001)
+        return not self.edit_mode and bool(self.crop) and (self.free[0] > 0.001 or self.free[1] > 0.001)
 
     def _image_rect(self) -> QRectF:
         if not self.image:
@@ -481,10 +512,23 @@ class PreviewCanvas(QWidget):
         avail = QRectF(self.rect()).adjusted(m, m, -m, -m)
         iw, ih = self.image.width(), self.image.height()
         k = min(avail.width() / iw, avail.height() / ih)
-        w, h = iw * k, ih * k
-        return QRectF(avail.center().x() - w / 2, avail.center().y() - h / 2, w, h)
+        w, h = iw * k * self.zoom, ih * k * self.zoom
+        c = avail.center() + self.pan
+        return QRectF(c.x() - w / 2, c.y() - h / 2, w, h)
+
+    def _place_apply_button(self):
+        show = bool(self.edit_mode and self.crop and self.image and not self.zoom_enabled and not self._grab)
+        if show:
+            cr = self._frame_rect()
+            b = self.apply_btn
+            b.adjustSize()
+            x = min(max(4, cr.right() - b.width() - 8), self.width() - b.width() - 4)
+            y = min(max(4, cr.bottom() - b.height() - 8), self.height() - b.height() - 4)
+            b.move(int(x), int(y))
+        self.apply_btn.setVisible(show)
 
     def paintEvent(self, _):
+        self._place_apply_button()
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
@@ -530,6 +574,10 @@ class PreviewCanvas(QWidget):
                 p.drawLine(QPointF(cr.left(), y), QPointF(cr.right(), y))
             p.setPen(QPen(QColor(self.p["accent_hover"]), 2))
             p.drawRect(cr)
+            if self.edit_mode:
+                p.setBrush(QColor("#ffffff"))
+                for pt in self._handles(cr).values():
+                    p.drawRect(QRectF(pt.x() - 5, pt.y() - 5, 10, 10))
 
         if self.message:
             p.setPen(QColor(self.p["text"]))
@@ -542,7 +590,140 @@ class PreviewCanvas(QWidget):
         self.setCursor(Qt.CursorShape.CrossCursor if on else
                        (Qt.CursorShape.OpenHandCursor if self._can_drag() else Qt.CursorShape.ArrowCursor))
 
+    # -------------------------------------------------------------- frame with handles
+    def _frame_rect(self) -> QRectF:
+        r = self._image_rect()
+        x0, y0, x1, y1 = self.crop
+        return QRectF(r.left() + x0 * r.width(), r.top() + y0 * r.height(), (x1 - x0) * r.width(), (y1 - y0) * r.height())
+
+    def _handles(self, cr: QRectF) -> dict[str, QPointF]:
+        cx, cy = cr.center().x(), cr.center().y()
+        pts = {"nw": cr.topLeft(), "ne": cr.topRight(), "sw": cr.bottomLeft(), "se": cr.bottomRight()}
+        if self.lock is None:
+            pts.update(n=QPointF(cx, cr.top()), s=QPointF(cx, cr.bottom()),
+                       w=QPointF(cr.left(), cy), e=QPointF(cr.right(), cy))
+        return pts
+
+    def _start_new(self, pos: QPointF) -> bool:
+        """Press on the picture outside the frame: a new frame is drawn from this corner."""
+        r = self._image_rect()
+        if not (self.image and r.contains(pos)):
+            return False
+        self._grab, self._grab_pos, self._grab_crop = "new", pos, self.crop
+        self._new_moved = False
+        return True
+
+    def _hit(self, pos: QPointF) -> str | None:
+        if not (self.edit_mode and self.crop and self.image):
+            return None
+        cr = self._frame_rect()
+        for name, pt in self._handles(cr).items():
+            if abs(pt.x() - pos.x()) <= 9 and abs(pt.y() - pos.y()) <= 9:
+                return name
+        return "move" if cr.contains(pos) else None
+
+    @staticmethod
+    def _cursor_for(h: str | None):
+        return {"nw": Qt.CursorShape.SizeFDiagCursor, "se": Qt.CursorShape.SizeFDiagCursor,
+                "ne": Qt.CursorShape.SizeBDiagCursor, "sw": Qt.CursorShape.SizeBDiagCursor,
+                "n": Qt.CursorShape.SizeVerCursor, "s": Qt.CursorShape.SizeVerCursor,
+                "w": Qt.CursorShape.SizeHorCursor, "e": Qt.CursorShape.SizeHorCursor,
+                "move": Qt.CursorShape.SizeAllCursor}.get(h, Qt.CursorShape.ArrowCursor)
+
+    def _drag_frame(self, pos: QPointF):
+        r = self._image_rect()
+        if r.isEmpty():
+            return
+        dx = (pos.x() - self._grab_pos.x()) / r.width()
+        dy = (pos.y() - self._grab_pos.y()) / r.height()
+        x0, y0, x1, y1 = self._grab_crop or (0.0, 0.0, 1.0, 1.0)
+        h, mn = self._grab, 0.03
+        if h == "new":
+            if not self._new_moved and abs(dx * r.width()) + abs(dy * r.height()) < 4:
+                return
+            self._new_moved = True
+            ax = min(max(0.0, (self._grab_pos.x() - r.left()) / r.width()), 1.0)
+            ay = min(max(0.0, (self._grab_pos.y() - r.top()) / r.height()), 1.0)
+            px = min(max(0.0, (pos.x() - r.left()) / r.width()), 1.0)
+            py = min(max(0.0, (pos.y() - r.top()) / r.height()), 1.0)
+            if self.lock is not None:
+                k = r.width() / r.height() / self.lock
+                sx, sy = (1 if px >= ax else -1), (1 if py >= ay else -1)
+                max_w = min((1 - ax) if sx > 0 else ax, ((1 - ay) if sy > 0 else ay) / k)
+                w = min(abs(px - ax), abs(py - ay) / k, max_w)
+                px, py = ax + sx * w, ay + sy * w * k
+            x0, x1 = sorted((ax, px))
+            y0, y1 = sorted((ay, py))
+            self.crop = (x0, y0, max(x1, x0 + 0.01), max(y1, y0 + 0.01))
+        elif h == "move":
+            w, hh = x1 - x0, y1 - y0
+            nx, ny = min(max(0.0, x0 + dx), 1 - w), min(max(0.0, y0 + dy), 1 - hh)
+            self.crop = (nx, ny, nx + w, ny + hh)
+        elif self.lock is not None:
+            # corner with the shape kept: the opposite corner stays, size follows the pointer
+            ax, ay = (x1 if "w" in h else x0), (y1 if "n" in h else y0)
+            sx, sy = (-1 if "w" in h else 1), (-1 if "n" in h else 1)
+            k = r.width() / r.height() / self.lock          # normalised height per normalised width
+            max_w = min((ax if sx < 0 else 1 - ax), (ay if sy < 0 else 1 - ay) / k)
+            px = (x0 if "w" in h else x1) + dx
+            w = min(max(mn, (px - ax) * sx), max_w)
+            hh = w * k
+            nx0, nx1 = sorted((ax, ax + sx * w))
+            ny0, ny1 = sorted((ay, ay + sy * hh))
+            self.crop = (nx0, ny0, nx1, ny1)
+        else:
+            if "w" in h:
+                x0 = min(max(0.0, x0 + dx), x1 - mn)
+            if "e" in h:
+                x1 = max(min(1.0, x1 + dx), x0 + mn)
+            if "n" in h:
+                y0 = min(max(0.0, y0 + dy), y1 - mn)
+            if "s" in h:
+                y1 = max(min(1.0, y1 + dy), y0 + mn)
+            self.crop = (x0, y0, x1, y1)
+        self.update()
+
+    def keyPressEvent(self, e):
+        """Arrows nudge the frame by one picture pixel (Shift: ten); with Ctrl they resize it instead."""
+        k = e.key()
+        arrows = {Qt.Key.Key_Left: (-1, 0), Qt.Key.Key_Right: (1, 0), Qt.Key.Key_Up: (0, -1), Qt.Key.Key_Down: (0, 1)}
+        if not (self.edit_mode and self.crop and self.image and k in arrows):
+            super().keyPressEvent(e)
+            return
+        step = 10 if e.modifiers() & Qt.KeyboardModifier.ShiftModifier else 1
+        dx, dy = arrows[k][0] * step / self.image.width(), arrows[k][1] * step / self.image.height()
+        x0, y0, x1, y1 = self.crop
+        if e.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            if self.lock is not None:           # shape kept: width leads, height follows
+                d = dx if dx else dy * self.lock * self.image.height() / self.image.width()
+                kx = self.image.width() / self.image.height() / self.lock
+                w = min(max(0.01, x1 - x0 + d), 1 - x0, (1 - y0) / kx)
+                x1, y1 = x0 + w, y0 + w * kx
+            else:
+                x1 = min(max(x0 + 0.01, x1 + dx), 1.0)
+                y1 = min(max(y0 + 0.01, y1 + dy), 1.0)
+        else:
+            w, h = x1 - x0, y1 - y0
+            x0 = min(max(0.0, x0 + dx), 1 - w)
+            y0 = min(max(0.0, y0 + dy), 1 - h)
+            x1, y1 = x0 + w, y0 + h
+        self.crop = (x0, y0, x1, y1)
+        self.update()
+        self.cropEdited.emit(*self.crop)
+
     def mousePressEvent(self, e):
+        self.setFocus()
+        if self.zoom_enabled and e.button() in (Qt.MouseButton.MiddleButton, Qt.MouseButton.RightButton):
+            self._pan_start, self._pan0 = e.position(), QPointF(self.pan)
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            return
+        if self.edit_mode and e.button() == Qt.MouseButton.LeftButton and not self.pick_mode:
+            h = self._hit(e.position())
+            if h:
+                self._grab, self._grab_pos, self._grab_crop = h, e.position(), self.crop
+            else:
+                self._start_new(e.position())
+            return
         if self.pick_mode and e.button() == Qt.MouseButton.LeftButton and self.image:
             r = self._image_rect()
             if r.contains(e.position()):
@@ -555,6 +736,19 @@ class PreviewCanvas(QWidget):
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
 
     def mouseMoveEvent(self, e):
+        if self._pan_start is not None:
+            self.pan = self._pan0 + (e.position() - self._pan_start)
+            self.update()
+            return
+        if self.edit_mode and not self.pick_mode:
+            if self._grab:
+                self._drag_frame(e.position())
+            else:
+                h = self._hit(e.position())
+                self.setCursor(self._cursor_for(h) if h else
+                               Qt.CursorShape.CrossCursor if self._image_rect().contains(e.position())
+                               else Qt.CursorShape.ArrowCursor)
+            return
         if self._drag_start is None:
             return
         r = self._image_rect()
@@ -572,12 +766,62 @@ class PreviewCanvas(QWidget):
         self._move_crop(ox, oy)
 
     def mouseReleaseEvent(self, e):
+        if self._pan_start is not None and e.button() in (Qt.MouseButton.MiddleButton, Qt.MouseButton.RightButton):
+            self._pan_start = None
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            return
+        if self._grab:
+            moved = self._grab != "new" or self._new_moved
+            self.drew_new = self._grab == "new"
+            self._grab = None
+            if moved and self.crop:
+                self.cropEdited.emit(*self.crop)
+            return
         if self._drag_start is not None:
             self._drag_start = None
             self.setCursor(Qt.CursorShape.OpenHandCursor)
             self.offsetChanged.emit(*self.offset)
 
+    def reset_view(self):
+        self.zoom, self.pan = 1.0, QPointF(0.0, 0.0)
+        self.zoomChanged.emit(1.0)
+        self.update()
+
+    def wheelEvent(self, e):
+        if not (self.zoom_enabled and self.image):
+            e.ignore()
+            return
+        s = 1.25 if e.angleDelta().y() > 0 else 0.8
+        z = min(max(self.zoom * s, 1.0), 24.0)
+        s = z / self.zoom
+        if s == 1.0:
+            return
+        m = 18
+        c0 = QRectF(self.rect()).adjusted(m, m, -m, -m).center()
+        v = e.position() - (c0 + self.pan)
+        self.pan = self.pan + v * (1 - s)          # the point under the pointer stays under it
+        self.zoom = z
+        if z == 1.0:
+            self.pan = QPointF(0.0, 0.0)
+        self.zoomChanged.emit(z)
+        self.update()
+
+    def contextMenuEvent(self, e):
+        if self.zoom_enabled:
+            return
+        if self.image:
+            self.menuRequested.emit(e.globalPos())
+
     def mouseDoubleClickEvent(self, e):
+        if self.result_mode and e.button() == Qt.MouseButton.LeftButton:
+            self.cropToggle.emit()
+            return
+        if self.edit_mode:
+            if self.crop and self._frame_rect().contains(e.position()):
+                self.cropToggle.emit()          # double-click inside the frame: crop
+            else:
+                self.cropReset.emit()           # double-click outside it: remove the frame
+            return
         if self._can_drag():
             self._move_crop(0.0, 0.0)
             self.offsetChanged.emit(0.0, 0.0)

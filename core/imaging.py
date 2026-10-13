@@ -1,6 +1,8 @@
 """Colour adjustment, framing (rotate / mirror / crop) and saving."""
 from __future__ import annotations
 
+import math
+
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
@@ -104,6 +106,10 @@ class JobSettings:
     color_overrides: dict[str, ColorSettings] = field(default_factory=dict)
     # PDFs changed in the PDF editor: str(original path) -> edited copy that is converted instead.
     replacements: dict[str, str] = field(default_factory=dict)
+    # Per-file free straightening angle in degrees (clockwise) and crop frame (normalised x0, y0, x1, y1)
+    # drawn with the mouse; the frame is relative to the straightened picture.
+    angles: dict[str, float] = field(default_factory=dict)
+    crops: dict[str, tuple[float, float, float, float]] = field(default_factory=dict)
 
     def color_for(self, path) -> ColorSettings:
         return self.color_overrides.get(str(path), self.color)
@@ -182,6 +188,22 @@ def orient(img: Image.Image, f: FrameSettings) -> Image.Image:
     return img
 
 
+def straighten(img: Image.Image, angle: float) -> Image.Image:
+    """Turn by a small angle (clockwise) and cut away the empty corners: the largest same-shaped part stays."""
+    if not angle:
+        return img
+    info = img.info
+    w, h = img.size
+    a = math.radians(abs(angle) % 180)
+    k = 1.0 / (abs(math.cos(a)) + abs(math.sin(a)) * max(w / h, h / w))
+    turned = img.rotate(-angle, resample=Image.Resampling.BICUBIC, expand=False)
+    cw, ch = max(1, round(w * k)), max(1, round(h * k))
+    left, top = (w - cw) // 2, (h - ch) // 2
+    out = turned.crop((left, top, left + cw, top + ch))
+    out.info.update(info)
+    return out
+
+
 def ratio_pair(f: FrameSettings) -> tuple[float, float] | None:
     """(long side, short side) of the chosen format, or None for "original"."""
     if f.ratio == "custom":
@@ -240,9 +262,26 @@ def crop_box(size: tuple[int, int], f: FrameSettings, offset=(0.0, 0.0)) -> tupl
     return left, top, left + cw, top + ch
 
 
-def apply_frame(img: Image.Image, f: FrameSettings, offset=(0.0, 0.0), dpi: int | None = None) -> Image.Image:
-    """Rotate, mirror, crop or pad. With ``dpi`` a custom size is resized to exact pixels."""
-    img = orient(img, f)
+def apply_frame(img: Image.Image, f: FrameSettings, offset=(0.0, 0.0), dpi: int | None = None,
+                angle: float = 0.0, crop=None) -> Image.Image:
+    """Rotate, mirror, crop or pad. With ``dpi`` a custom size is resized to exact pixels.
+    ``angle`` straightens the picture, ``crop`` is a frame drawn with the mouse (normalised box)."""
+    img = straighten(orient(img, f), angle)
+    if crop and not (f.ratio == "custom" and f.fit and ratio_pair(f)):
+        w, h = img.size
+        box = (round(crop[0] * w), round(crop[1] * h), round(crop[2] * w), round(crop[3] * h))
+        if box[2] - box[0] >= 1 and box[3] - box[1] >= 1 and box != (0, 0, w, h):
+            info = img.info
+            img = img.crop(box)
+            img.info.update(info)
+        crop = None
+        offset = (0.0, 0.0)
+        px = target_pixels(img.size, f, dpi) if dpi else None
+        if px and img.size != px:
+            info = img.info
+            img = img.resize(px, Image.Resampling.LANCZOS)
+            img.info.update(info)
+        return img
     px = target_pixels(img.size, f, dpi) if dpi else None
     if f.ratio == "custom" and f.fit and ratio_pair(f):
         img, _ = fit_pad(img, f)

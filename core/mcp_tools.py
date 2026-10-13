@@ -430,7 +430,11 @@ def print_files(args, ctx) -> dict:
     from .printjob import (PAPER_BY_KEY, PDF_PRINTER, make_printer, parse_range, print_pages, printers)
     sources = _sources(args)
     files = [s.path for s in sources if s.path.suffix.lower() not in ARCHIVE_EXTS]
-    settings = build_settings({**args, "format": "JPEG"})
+    # In print_files "color" is the print mode ("color" or "gray"); the colour corrections are not part of it.
+    mode_color = args.get("color", "color")
+    if mode_color not in ("color", "gray"):
+        raise ToolError("color: color или gray")
+    settings = build_settings({**{k: v for k, v in args.items() if k != "color"}, "format": "JPEG"})
     dpi = int(args.get("dpi", 300))
     if dpi not in range(72, 1201):
         raise ToolError("dpi: 72..1200")
@@ -481,7 +485,7 @@ def print_files(args, ctx) -> dict:
         printer = make_printer(name)
     printer.setDocName(files[0].stem if len(files) == 1 else "KopiTehnik")
     done = print_pages(pages, printer, name, paper, landscape, dpi, mode=mode, margin_mm=float(args.get("margin_mm", 0)),
-                       gray=args.get("color", "color") == "gray", rotate=bool(args.get("rotate_to_fit", True)),
+                       gray=mode_color == "gray", rotate=bool(args.get("rotate_to_fit", True)),
                        copies=1 if to_pdf else max(1, int(args.get("copies", 1))), wanted=wanted)
     summary["pages_sent"] = done
     return summary

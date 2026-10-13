@@ -4,11 +4,12 @@ from __future__ import annotations
 import copy
 import json
 import os
+import time
 from collections import OrderedDict
 from dataclasses import asdict
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QRunnable, QSettings, Qt, QThread, QThreadPool, QTimer, QUrl, Signal
+from PySide6.QtCore import QEvent, QObject, QRunnable, QSettings, Qt, QThread, QThreadPool, QTimer, QUrl, Signal
 from PySide6.QtGui import QColor, QDesktopServices, QImage, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QGridLayout, QSpinBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget,
@@ -21,7 +22,7 @@ from PIL import Image
 
 from core.imaging import (
     SIZE_PRESETS, ColorSettings, FrameSettings, JobSettings, OutputSettings, apply_color, apply_frame, crop_box, fit_pad,
-    orient, ratio_pair, white_balance_from_pixel,
+    orient, ratio_pair, straighten, white_balance_from_pixel,
 )
 from dataclasses import replace
 from PIL import ImageDraw
@@ -183,8 +184,8 @@ class MainWindow(QMainWindow):
         v.addWidget(wrap, 1)
         v.addWidget(self._build_footer())
 
-        QShortcut(QKeySequence(Qt.Key.Key_Left), self, activated=self.prev_file)
-        QShortcut(QKeySequence(Qt.Key.Key_Right), self, activated=self.next_file)
+        QShortcut(QKeySequence(Qt.Key.Key_Left), self, activated=lambda: self._arrow(Qt.Key.Key_Left, self.prev_file))
+        QShortcut(QKeySequence(Qt.Key.Key_Right), self, activated=lambda: self._arrow(Qt.Key.Key_Right, self.next_file))
         QShortcut(QKeySequence("Ctrl+Return"), self, activated=self.start)
 
     def _build_header(self) -> QWidget:
@@ -527,6 +528,36 @@ class MainWindow(QMainWindow):
         for b in (self.rot_left, self.rot_right, self.mirror_h_btn, self.mirror_v_btn):
             r2.addWidget(b)
         c.add(r2)
+        self.tilt_row = SliderRow("tilt", self.t("tilt"), -450, 450, 0)   # tenths of a degree
+        self.tilt_row._update_label = lambda v, row=self.tilt_row: row.value_label.setText(f"{v / 10:+.1f}°" if v else "0°")
+        self.tilt_row._update_label(0)
+        self._bind(self.tilt_row.label, "tilt")
+        self.tilt_row.setToolTip(self.t("tilt_tip"))
+        self.tilt_row.valueChanged.connect(self._tilt_changed)
+        c.add(self.tilt_row)
+        self._applied: set[str] = set()      # photos whose preview shows the finished crop, not the frame
+        self._undo_stack, self._redo_stack, self._undo_tag, self._undo_time = [], [], "", 0.0
+        ur = QHBoxLayout()
+        ur.setSpacing(6)
+        self.undo_action_btn = self._bind(AnimatedButton(), "undo_action")
+        self.undo_action_btn.clicked.connect(self.undo_edit_action)
+        self.redo_action_btn = self._bind(AnimatedButton(), "redo_action")
+        self.redo_action_btn.clicked.connect(self.redo_edit_action)
+        ur.addWidget(self.undo_action_btn)
+        ur.addWidget(self.redo_action_btn)
+        c.add(ur)
+        self.big_crop_btn = self._bind(AnimatedButton(), "crop_big")
+        self.big_crop_btn.setToolTip(self.t("crop_big_tip"))
+        self.big_crop_btn.clicked.connect(self.open_big_crop)
+        c.add(self.big_crop_btn)
+        self._update_undo_buttons()
+        self.frame_edit_btn = AnimatedButton()
+        self.frame_edit_btn.setText(self.t("frame_edit"))
+        self.frame_edit_btn.setToolTip(self.t("frame_edit_tip"))
+        self.frame_edit_btn.setObjectName("primary")
+        self.frame_edit_btn.clicked.connect(self._crop_button_clicked)
+        self.frame_edit_btn.hide()
+        c.add(self.frame_edit_btn)
         self.frame_hint = self._bind(QLabel(), "frame_hint")
         self.frame_hint.setObjectName("hint")
         self.frame_hint.setWordWrap(True)
@@ -644,6 +675,10 @@ class MainWindow(QMainWindow):
         self.edit_pdf_btn.clicked.connect(self.edit_pdf)
         self.edit_pdf_btn.hide()
         bar.addWidget(self.edit_pdf_btn)
+        self.scan_btn = self._bind(AnimatedButton(), "scan_ocr")
+        self.scan_btn.clicked.connect(lambda: self.edit_pdf(scan=True))
+        self.scan_btn.hide()
+        bar.addWidget(self.scan_btn)
         self.undo_edit_btn = self._bind(AnimatedButton(), "undo_edit")
         self.undo_edit_btn.setObjectName("ghost")
         self.undo_edit_btn.clicked.connect(self.drop_pdf_edits)
@@ -669,6 +704,18 @@ class MainWindow(QMainWindow):
         v.addLayout(bar)
         self.canvas = PreviewCanvas(PALETTES[self.theme])
         self.canvas.offsetChanged.connect(self._offset_changed)
+        self.canvas.cropEdited.connect(self._crop_edited)
+        self.canvas.cropReset.connect(self._crop_reset)
+        self.canvas.cropToggle.connect(self._crop_button_clicked)
+        self._bind(self.canvas.apply_btn, "frame_edit")
+        self.canvas.menuRequested.connect(self._preview_menu)
+        from PySide6.QtGui import QKeySequence, QShortcut
+        QShortcut(QKeySequence("Ctrl+Z"), self, activated=self.undo_edit_action)
+        QShortcut(QKeySequence("Ctrl+Y"), self, activated=self.redo_edit_action)
+        QShortcut(QKeySequence("Ctrl+Shift+Z"), self, activated=self.redo_edit_action)
+        for k in (Qt.Key.Key_Return, Qt.Key.Key_Enter):   # Enter on the preview: crop / back to the frame
+            sc = QShortcut(QKeySequence(k), self.canvas, activated=self._crop_button_clicked)
+            sc.setContext(Qt.ShortcutContext.WidgetShortcut)
         self.canvas.picked.connect(self._pick_white)
         self.canvas.filesDropped.connect(self._dropped)
         v.addWidget(self.canvas, 1)
@@ -778,7 +825,9 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------ PDF editor
     _edits_dir: Path | None = None
 
-    def edit_pdf(self):
+    SCAN_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
+
+    def edit_pdf(self, scan: bool = False):
         key = self._current_key()
         if not key:
             return
@@ -786,8 +835,34 @@ class MainWindow(QMainWindow):
         edited = self.settings.replacements.get(key)
         if edited and Path(edited).exists():
             pdf = Path(edited)
+            scan = False
         elif path.suffix.lower() == ".pdf":
             pdf = path
+        elif path.suffix.lower() in self.SCAN_EXTS:
+            # A scanned picture: make a one-page PDF of it, and read it as soon as the editor opens.
+            import tempfile
+
+            import pymupdf
+            try:
+                # What was cropped, straightened and turned in the preview is what gets read, not the original.
+                from core.imaging import apply_frame
+                from core.loaders import load_pages
+                self._collect_settings()
+                s = self.settings
+                tmp = Path(tempfile.mkdtemp(prefix="kt_scan_"))
+                page = load_pages(path, dpi=300)[0]
+                page = apply_frame(page, s.frame, s.offsets.get(key, (0.0, 0.0)),
+                                   angle=s.angles.get(key, 0.0), crop=s.crops.get(key))
+                src = tmp / (path.stem + ".png")
+                page.save(src, dpi=(300, 300))
+                with pymupdf.open(src) as img:
+                    data = img.convert_to_pdf()
+                pdf = tmp / (path.stem + ".pdf")
+                pdf.write_bytes(data)
+            except Exception as exc:
+                self.status_label.setText(self.t("preview_error", err=str(exc)))
+                return
+            scan = True
         else:
             # Word, PowerPoint, Excel: edit the PDF the office program makes from it.
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -808,7 +883,7 @@ class MainWindow(QMainWindow):
         save_to = MainWindow._edits_dir / f"{path.stem}_{len(os.listdir(MainWindow._edits_dir)) + 1}.pdf"
         from .pdf_editor import PdfEditor
 
-        dlg = PdfEditor(self, self.t, pdf, save_to, path.name)
+        dlg = PdfEditor(self, self.t, pdf, save_to, path.name, auto_ocr=scan)
         dlg.setStyleSheet(self.styleSheet())
         dlg.exec()
         if dlg.result:
@@ -1128,6 +1203,11 @@ class MainWindow(QMainWindow):
         has = 0 <= self.current < n
         ext = self.sources[self.current].path.suffix.lower() if has else ""
         editable = ext == ".pdf" or ext in office.OFFICE_EXTS
+        scannable = ext in self.SCAN_EXTS and str(self.sources[self.current].path) not in self.settings.replacements
+        self._sync_free_edit()
+        self.scan_btn.setVisible(scannable)
+        self.scan_btn.setEnabled(office.detect().pymupdf)
+        self.scan_btn.setToolTip(self.t("scan_ocr_tip"))
         can = office.detect().pymupdf
         self.edit_pdf_btn.setVisible(editable)
         self.edit_pdf_btn.setEnabled(can)
@@ -1177,6 +1257,8 @@ class MainWindow(QMainWindow):
         photo = is_photo(src.path)
         frame = s.frame if photo else FrameSettings(rotate=s.frame.rotate, mirror_h=s.frame.mirror_h, mirror_v=s.frame.mirror_v)
         img = orient(base, frame)
+        if photo:
+            img = straighten(img, s.angles.get(key, 0.0))
         if not self.compare_btn.isChecked():
             img = apply_color(img, s.color_for(key))
         crop = None
@@ -1188,7 +1270,32 @@ class MainWindow(QMainWindow):
         if box and box != (0, 0, *img.size):
             w, h = img.size
             crop = (box[0] / w, box[1] / h, box[2] / w, box[3] / h)
-        self.canvas.set_image(pil_to_qimage(img), crop, offset)
+        lock = None
+        if photo and key in s.crops:
+            crop = s.crops[key]
+            if box:
+                lock = (box[2] - box[0]) / max(1, box[3] - box[1])
+        if photo and not box:
+            lock = None
+        elif photo and key not in s.crops:
+            lock = (box[2] - box[0]) / max(1, box[3] - box[1])
+        self._frame_view = (pil_to_qimage(img), crop, lock) if photo else None
+        # With a frame in place the preview shows the finished crop; "edit frame" shows the whole photo again.
+        if not crop:
+            self._applied.discard(key)
+        show_result = bool(photo and crop and key in self._applied)
+        self.frame_edit_btn.setText(self.t("frame_edit_done") if show_result else self.t("frame_edit"))
+        if show_result:
+            w, h = img.size
+            img = img.crop((round(crop[0] * w), round(crop[1] * h), round(crop[2] * w), round(crop[3] * h)))
+            self.canvas.set_image(pil_to_qimage(img), None, (0.0, 0.0))
+            self.canvas.set_edit(False, None)
+            self.canvas.result_mode = True
+        else:
+            self.canvas.result_mode = False
+            self.canvas.set_image(pil_to_qimage(img), crop, offset)
+            self.canvas.set_edit(photo, lock)
+        self.frame_edit_btn.setVisible(bool(photo and crop))
         self.size_label.setText(f"{base.width}×{base.height}" if photo else "")
 
     def _preview_loaded(self, key: str, img, err: str):
@@ -1427,7 +1534,8 @@ class MainWindow(QMainWindow):
                 if base is None:
                     made[key] = (src.path.stem, Image.new("RGB", (1, 1), "#dddddd"))
                 else:
-                    img = apply_frame(base, s.frame, s.offsets.get(key, (0.0, 0.0)))
+                    img = apply_frame(base, s.frame, s.offsets.get(key, (0.0, 0.0)),
+                                      angle=s.angles.get(key, 0.0), crop=s.crops.get(key))
                     if not self.compare_btn.isChecked():
                         img = apply_color(img, s.color_for(key))
                     made[key] = (src.path.stem, fit_photo(img, area, sh))
@@ -1444,6 +1552,8 @@ class MainWindow(QMainWindow):
 
     def _ratio_changed(self, *_):
         self._update_custom_ui()
+        self.settings.crops.clear()                # a frame drawn for another format no longer fits
+        self._applied.clear()
         self._schedule_preview()
 
     def _preset_chosen(self, *_):
@@ -1483,7 +1593,140 @@ class MainWindow(QMainWindow):
     def _frame_changed(self, *_):
         self._schedule_preview()
 
+    def _tilt_changed(self, _key: str, v: int):
+        key = self._current_key()
+        if not key:
+            return
+        self._push_undo("tilt")
+        if v:
+            self.settings.angles[key] = v / 10.0
+        else:
+            self.settings.angles.pop(key, None)
+        self.settings.crops.pop(key, None)        # the picture turned: a frame drawn before no longer fits
+        self._applied.discard(key)
+        self._sync_free_edit()
+        self._schedule_preview()
+
+    # ------------------------------------------------------------------ undo
+    UNDO_LIMIT = 60
+
+    def _edit_state(self):
+        s = self.settings
+        return (dict(s.angles), dict(s.crops), dict(s.offsets), set(self._applied), s.frame.rotate)
+
+    def _push_undo(self, tag: str = ""):
+        """Remember the state before a change of crop, tilt or turn. Quick repeats with one tag count as one step."""
+        now = time.monotonic()
+        if tag and tag == self._undo_tag and now - self._undo_time < 0.7:
+            self._undo_time = now
+            return
+        self._undo_tag, self._undo_time = tag, now
+        self._undo_stack.append(self._edit_state())
+        del self._undo_stack[:-self.UNDO_LIMIT]
+        self._redo_stack.clear()
+        self._update_undo_buttons()
+
+    def _restore_edit_state(self, st):
+        s = self.settings
+        s.angles, s.crops, s.offsets = dict(st[0]), dict(st[1]), dict(st[2])
+        self._applied = set(st[3])
+        s.frame.rotate = st[4]
+        self._undo_tag = ""
+        self._update_rotate_label()
+        self._sync_free_edit()
+        self._update_undo_buttons()
+        self._schedule_preview()
+
+    def undo_edit_action(self):
+        if self._undo_stack:
+            self._redo_stack.append(self._edit_state())
+            self._restore_edit_state(self._undo_stack.pop())
+
+    def redo_edit_action(self):
+        if self._redo_stack:
+            self._undo_stack.append(self._edit_state())
+            self._restore_edit_state(self._redo_stack.pop())
+
+    def _update_undo_buttons(self):
+        self.undo_action_btn.setEnabled(bool(self._undo_stack))
+        self.redo_action_btn.setEnabled(bool(self._redo_stack))
+
+    def _preview_menu(self, pos):
+        from PySide6.QtWidgets import QMenu
+        m = QMenu(self)
+        m.addAction(self.frame_edit_btn.text(), self._crop_button_clicked).setEnabled(self.frame_edit_btn.isVisibleTo(self))
+        m.addAction(self.t("crop_big"), self.open_big_crop).setEnabled(bool(self._frame_view))
+        m.addSeparator()
+        m.addAction(self.t("undo_action"), self.undo_edit_action).setEnabled(bool(self._undo_stack))
+        m.addAction(self.t("redo_action"), self.redo_edit_action).setEnabled(bool(self._redo_stack))
+        m.exec(pos)
+
+    def open_big_crop(self):
+        """The photo on a big screen with zoom: set the frame exactly, then OK."""
+        key = self._current_key()
+        if not key or not getattr(self, "_frame_view", None):
+            return
+        from PySide6.QtWidgets import QDialog
+        from .crop_dialog import CropDialog
+        img, crop, lock = self._frame_view
+        dlg = CropDialog(self, self.t, self.canvas.p, img, crop, lock)
+        dlg.setStyleSheet(self.styleSheet())
+        dlg.showMaximized()
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            self._push_undo()
+            self.settings.crops[key] = dlg.crop
+            self._applied.discard(key)
+            self._schedule_preview()
+
+    def _arrow(self, key, switch_file):
+        """Left and Right switch the photo, but nudge the crop frame while the preview has the focus and a frame."""
+        c = self.canvas
+        if c.hasFocus() and c.edit_mode and c.crop:
+            from PySide6.QtGui import QKeyEvent
+            c.keyPressEvent(QKeyEvent(QEvent.Type.KeyPress, key, Qt.KeyboardModifier.NoModifier))
+        else:
+            switch_file()
+
+    def _crop_button_clicked(self):
+        key = self._current_key()
+        if not key:
+            return
+        self._push_undo()
+        if key in self._applied:
+            self._applied.discard(key)
+        else:
+            self._applied.add(key)
+        self._schedule_preview()
+
+    def _crop_reset(self):
+        key = self._current_key()
+        if key and (key in self.settings.crops or key in self.settings.offsets):
+            self._push_undo()
+        self._applied.discard(key)
+        if key and (self.settings.crops.pop(key, None) is not None or self.settings.offsets.pop(key, None)):
+            self._schedule_preview()
+
+    def _crop_edited(self, x0: float, y0: float, x1: float, y1: float):
+        key = self._current_key()
+        if key:
+            self._push_undo("crop")
+            self.settings.crops[key] = (x0, y0, x1, y1)
+            self._applied.discard(key)
+            self._schedule_preview()
+
+    def _sync_free_edit(self):
+        """The tilt slider and the mouse-crop button show the state of the current picture."""
+        key = self._current_key()
+        photo = bool(key) and is_photo(Path(key))
+        self.tilt_row.setVisible(photo)
+        self.big_crop_btn.setVisible(photo)
+        self.tilt_row.set_value(round(self.settings.angles.get(key, 0.0) * 10) if key else 0, silent=True)
+
     def _rotate(self, delta: int):
+        self._push_undo()
+        self.settings.crops.clear()                # frames drawn before no longer fit the turned picture
+        self._applied.clear()
+        self._sync_free_edit()
         self.settings.frame.rotate = (self.settings.frame.rotate + delta) % 360
         self._update_rotate_label()
         self._schedule_preview()
@@ -1525,8 +1768,10 @@ class MainWindow(QMainWindow):
         item.setToolTip(info if not ok else "")
         self._paint_item(item)
 
-    def start(self):
+    def start(self, only_current: bool = False):
         if self.thread:
+            return
+        if only_current and not (0 <= self.current < len(self.sources)):
             return
         if not self.sources:
             self.status_label.setText(self.t("nothing_to_do"))
@@ -1546,14 +1791,15 @@ class MainWindow(QMainWindow):
         for item in self.items.values():
             item.setData(Qt.ItemDataRole.UserRole, "pending")
             self._paint_item(item)
-        batch = Batch(list(self.sources), out_path, copy.deepcopy(self.settings))
+        todo = [self.sources[self.current]] if only_current else list(self.sources)
+        batch = Batch(todo, out_path, copy.deepcopy(self.settings))
         self.thread = ConvertThread(batch)
         self.thread.progress.connect(self._progress)
         self.thread.log.connect(self.log)
         self.thread.file_done.connect(self._file_done)
         self.thread.result.connect(self._finished)
         self.log_view.appendPlainText("")
-        self.log("info", self.t("log_start", n=len(self.sources), out=str(out_path)))
+        self.log("info", self.t("log_start", n=len(todo), out=str(out_path)))
         self.progress.setValue(0)
         self.start_btn.setEnabled(False)
         self.stop_btn.show()

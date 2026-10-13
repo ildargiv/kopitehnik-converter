@@ -36,3 +36,11 @@ Third-party software notices
 7. Необязательно, в «полной» версии: LibreOffice (MPL-2.0 и др.), запускается как отдельная
    программа для чтения документов Word/PowerPoint. Тексты лицензий лежат в папке LibreOffice.
    https://www.libreoffice.org
+
+8. Распознавание сканов (версия 3.0), всё работает на вашем компьютере, без сети:
+   - RapidOCR (Apache-2.0), https://github.com/RapidAI/RapidOCR
+   - Модели PaddleOCR PP-OCRv5 в формате ONNX: детектор текста и распознавание русского и латиницы
+     (Apache-2.0, PaddlePaddle / Baidu), https://github.com/PaddlePaddle/PaddleOCR
+   - ONNX Runtime (MIT), https://github.com/microsoft/onnxruntime
+   - OpenCV (Apache-2.0; сборка opencv-python под MIT), https://opencv.org
+   - NumPy (BSD-3-Clause), Shapely (BSD-3-Clause), pyclipper (MIT), OmegaConf (BSD-3-Clause), PyYAML (MIT)

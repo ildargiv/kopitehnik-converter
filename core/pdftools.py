@@ -5,6 +5,8 @@ Coordinates are points (1/72 inch) of the page *as shown*: origin at the top-lef
 PyMuPDF (AGPL) is imported only when a function runs, so the rest of the program does not depend on it."""
 from __future__ import annotations
 
+import re
+
 import os
 from pathlib import Path
 
@@ -196,7 +198,8 @@ def search(page, query: str, case_sensitive: bool = False) -> list[Hit]:
                      for ch in span.get("chars", [])]
             if not chars:
                 continue
-            text = "".join(c[0] for c in chars)
+            text = "".join(" " if c[0] == " " else c[0] for c in chars)   # no-break spaces count as spaces
+            query = query.replace(" ", " ")
             if case_sensitive:
                 hay, needle = text, query
             else:
@@ -313,7 +316,18 @@ def _write_line(page, point, line: str, font: str, size: float, color, bold: boo
         kwargs.update(fontfile=ff, fontname="F" + Path(ff).stem)
     elif any(ord(ch) > 255 for ch in line):
         raise PdfToolError("не нашёл шрифт с кириллицей (нужны шрифты Windows или DejaVu)")
-    page.insert_text(point, line, morph=morph, **kwargs)
+    if not ff:
+        page.insert_text(point, line, morph=morph, **kwargs)
+        return
+    # Word by word: the font's space glyph would be read back as U+00A0 and break text search. The words
+    # follow the writing direction of the page (the text is turned with the page).
+    dx, dy = {0: (1, 0), 90: (0, -1), 180: (-1, 0), 270: (0, 1)}.get(page.rotation % 360, (1, 0))
+    font_obj = _fitz().Font(fontfile=ff)
+    adv = 0.0
+    for m in re.finditer(r"\S+|\s+", line):
+        if m.group().strip():
+            page.insert_text(_fitz().Point(point.x + dx * adv, point.y + dy * adv), m.group(), morph=morph, **kwargs)
+        adv += font_obj.text_length(m.group(), fontsize=size)
 
 
 def _text_width(text: str, font: str, size: float, bold: bool, italic: bool) -> float:

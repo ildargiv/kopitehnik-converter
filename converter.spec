@@ -1,9 +1,11 @@
 # PyInstaller build: pyinstaller converter.spec
 # Produces dist/Converter.exe (one file, no console).
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+
 block_cipher = None
 
 excluded = [
-    "tkinter", "unittest", "pydoc", "numpy", "IPython", "matplotlib",
+    "tkinter", "unittest", "pydoc", "IPython", "matplotlib",
     "PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets", "PySide6.QtWebChannel",
     "PySide6.QtQml", "PySide6.QtQuick", "PySide6.QtQuickWidgets", "PySide6.Qt3DCore",
     "PySide6.QtMultimedia", "PySide6.QtCharts", "PySide6.QtDataVisualization",
@@ -14,8 +16,8 @@ excluded = [
 a = Analysis(
     ["app.py"],
     pathex=["."],
-    datas=[("assets/icon.png", "assets")],
-    hiddenimports=["PySide6.QtPdf", "PySide6.QtSvg", "PySide6.QtPrintSupport", "pillow_heif", "openpyxl", "pymupdf"],
+    datas=[("assets/icon.png", "assets"), ("assets/ocr_models", "assets/ocr_models")] + collect_data_files("rapidocr"),
+    hiddenimports=["PySide6.QtPdf", "PySide6.QtSvg", "PySide6.QtPrintSupport", "pillow_heif", "openpyxl", "pymupdf", "cv2", "onnxruntime", "shapely", "pyclipper", "omegaconf", "yaml"] + collect_submodules("rapidocr"),
     excludes=excluded,
     noarchive=False,
 )

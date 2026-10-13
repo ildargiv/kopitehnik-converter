@@ -6,3 +6,5 @@ tools/installer/payload/
 *.exe
 *.apk
 LibreOffice/
+build_*/
+dist_*/

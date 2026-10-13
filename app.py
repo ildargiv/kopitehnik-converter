@@ -65,6 +65,10 @@ def main() -> int:
     if len(sys.argv) >= 2 and sys.argv[1] == "--mcp":
         from core.mcp_server import run   # MCP server for AI agents, speaks JSON over stdin/stdout
         return run()
+    if len(sys.argv) == 4 and sys.argv[1] == "--ocr":
+        from core import ocr  # Converter.exe --ocr <scanned.pdf> <searchable.pdf>
+        ocr.build_pdf(sys.argv[2], sys.argv[3])
+        return 0
     if len(sys.argv) == 4 and sys.argv[1] == "--convert":
         return convert_cli(sys.argv[2], sys.argv[3])
     QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)

@@ -114,7 +114,9 @@ def process_file(path: Path, settings: JobSettings, dpi: int | None = None, read
     pages = load_pages(read_from or path, dpi=dpi)
     offset = s.offsets.get(str(path), (0.0, 0.0))
     frame = s.frame if is_photo(path) else replace(s.frame, ratio="original")
-    return [apply_color(apply_frame(p, frame, offset, dpi=dpi), s.color_for(path)) for p in pages]
+    angle, crop = s.angles.get(str(path), 0.0), s.crops.get(str(path))
+    return [apply_color(apply_frame(p, frame, offset, dpi=dpi, angle=angle, crop=crop), s.color_for(path))
+            for p in pages]
 
 
 # --------------------------------------------------------------------------- conversion
@@ -228,7 +230,8 @@ class Batch:
         for i, page in enumerate(pages):
             if self.stopped:
                 break
-            img = apply_frame(page, frame, offset, dpi=s.output.dpi)
+            img = apply_frame(page, frame, offset, dpi=s.output.dpi, angle=s.angles.get(str(src.path), 0.0),
+                              crop=s.crops.get(str(src.path)))
             img = apply_color(img, s.color_for(src.path))
             pages[i] = None  # free the full-size page early
             if as_pdf:
