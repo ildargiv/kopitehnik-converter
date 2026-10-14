@@ -51,7 +51,7 @@ def main() -> int:
     shutil.copy2(WORK / "uninst" / "Uninstall.exe", PAYLOAD / "Uninstall.exe")
     files = [(PAYLOAD / n, ".") for n in ("Converter.exe", "Uninstall.exe", "icon.ico", "THIRD_PARTY_NOTICES.txt", "MCP.md")]
     pyi("KopiTehnik-Converter-Setup", ROOT / "dist", files)
-    print("Готово:", ROOT / "dist" / "KopiTehnik-Converter-Setup.exe")
+    print("Done:", ROOT / "dist" / "KopiTehnik-Converter-Setup.exe")
     return 0
 
 
