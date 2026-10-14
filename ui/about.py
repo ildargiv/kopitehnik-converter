@@ -14,7 +14,7 @@ from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QVBoxLayout
 from .widgets import AnimatedButton, LogoMark
 
 from core import updater
-from core.version import GROUP_URL, UPDATE_URL, VERSION
+from core.version import VERSION
 
 
 def _icon_path() -> Path:
@@ -108,10 +108,6 @@ class AboutDialog(QDialog):
         dlg.exec()
 
     def _check(self):
-        if not UPDATE_URL:  # no version file configured: the group page is the channel
-            QDesktopServices.openUrl(QUrl(GROUP_URL))
-            self.upd_status.setText(self._t("update_group_opened"))
-            return
         self.upd_btn.setEnabled(False)
         self.upd_status.setText(self._t("update_checking"))
         self._checker.start()
@@ -124,5 +120,6 @@ class AboutDialog(QDialog):
         elif info is None:
             self.upd_status.setText(t("update_latest", v=VERSION))
         else:
-            link = info.url or GROUP_URL
-            self.upd_status.setText(t("update_available", v=info.version) + f' <a href="{link}" style="color:#937aff">{t("update_open")}</a>')
+            self.upd_status.setText(t("update_available", v=info.version))
+            from .update_dialog import UpdateDialog
+            UpdateDialog(self, t, info).exec()

@@ -4,8 +4,7 @@ VERSION = "3.0"
 # Group where new versions are published (shown in "About").
 GROUP_URL = "https://vk.ru/icc_profil"
 
-# Address of a small JSON file for the automatic check, for example
-#   https://github.com/<user>/<repo>/releases/latest/download/version.json
-# containing {"version": "2.1", "url": "https://...", "notes": "what is new"}.
-# While empty, the check only opens the group page.
-UPDATE_URL = ""
+# Latest release of the project on GitHub: the program looks here for a newer version
+# (the installer and SHA256SUMS.txt attached to the release are used for the update).
+RELEASES_API = "https://api.github.com/repos/ildargiv/kopitehnik-converter/releases/latest"
+RELEASES_URL = "https://github.com/ildargiv/kopitehnik-converter/releases/latest"

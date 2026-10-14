@@ -34,30 +34,12 @@ def convert_cli(src: str, dst: str) -> int:
 
 
 def _check_updates_quietly(win) -> None:
-    """With a version file configured, tell about a new version once per launch; stay silent otherwise."""
-    from core.version import GROUP_URL, UPDATE_URL
-    if not UPDATE_URL:
-        return
-    from PySide6.QtCore import QUrl
-    from PySide6.QtGui import QDesktopServices
-    from PySide6.QtWidgets import QMessageBox
+    """Look for a newer GitHub release once per launch; ask only when there is one, stay silent otherwise."""
     from ui.about import UpdateChecker
+    from ui.update_dialog import UpdateDialog
 
     checker = UpdateChecker(win)
-
-    def done(info, err):
-        if info is None:
-            return
-        box = QMessageBox(win)
-        box.setWindowTitle(win.t("update_check"))
-        box.setText(win.t("update_available", v=info.version))
-        get = box.addButton(win.t("update_open"), QMessageBox.ButtonRole.AcceptRole)
-        box.addButton(win.t("close"), QMessageBox.ButtonRole.RejectRole)
-        box.exec()
-        if box.clickedButton() is get:
-            QDesktopServices.openUrl(QUrl(info.url or GROUP_URL))
-
-    checker.done.connect(done)
+    checker.done.connect(lambda info, err: info and UpdateDialog(win, win.t, info).exec())
     checker.start()
 
 
