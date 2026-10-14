@@ -22,7 +22,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
 
       - name: Check that the tag matches core/version.py
         if: startsWith(github.ref, 'refs/tags/v')
