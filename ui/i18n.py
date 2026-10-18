@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 LANGUAGES = {"ru": "Русский", "en": "English", "es": "Español", "de": "Deutsch", "fr": "Français",
-             "pt": "Português", "tr": "Türkçe", "zh": "中文"}
+             "pt": "Português", "tr": "Türkçe", "zh": "中文", "ja": "日本語"}
 
 TEXTS: dict[str, dict[str, str]] = {
     "ru": {
@@ -676,9 +676,10 @@ from .i18n_fr import TEXTS as _fr  # noqa: E402
 from .i18n_pt import TEXTS as _pt  # noqa: E402
 from .i18n_tr import TEXTS as _tr  # noqa: E402
 from .i18n_zh import TEXTS as _zh  # noqa: E402
+from .i18n_ja import TEXTS as _ja  # noqa: E402
 
 # Other languages list only what differs from English; missing keys fall back to English, then Russian.
-TEXTS.update({"es": _es, "de": _de, "fr": _fr, "pt": _pt, "tr": _tr, "zh": _zh})
+TEXTS.update({"es": _es, "de": _de, "fr": _fr, "pt": _pt, "tr": _tr, "zh": _zh, "ja": _ja})
 
 
 def system_language() -> str:

@@ -1,5 +1,6 @@
 """Português (Brasil). Keys missing here fall back to English (see tr() in i18n.py)."""
 TEXTS = {
+    "app_title": "KopiTehnik Conversor",
     "app_subtitle": "Fotos e documentos em JPG, PNG, TIFF ou PDF com correção de cor",
     "theme_toggle": "Tema claro ou escuro",
     "browse": "Escolher pasta",

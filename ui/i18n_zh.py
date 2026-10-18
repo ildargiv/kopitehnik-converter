@@ -1,5 +1,6 @@
 """简体中文. Keys missing here fall back to English (see tr() in i18n.py)."""
 TEXTS = {
+    "app_title": "KopiTehnik 转换器",
     "app_subtitle": "将照片和文档转换为 JPG、PNG、TIFF 或 PDF，并支持颜色校正",
     "theme_toggle": "浅色或深色主题",
     "browse": "选择文件夹",

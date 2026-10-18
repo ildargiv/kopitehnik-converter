@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
         self.store = QSettings()
         self.lang = self.store.value("lang", system_language())
         if self.lang not in LANGUAGES:
-            self.lang = "ru"
+            self.lang = "en"
         self.theme = self.store.value("theme", "dark")
         if self.theme not in PALETTES:
             self.theme = "dark"

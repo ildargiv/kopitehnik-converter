@@ -1,5 +1,6 @@
 """Français. Keys missing here fall back to English (see tr() in i18n.py)."""
 TEXTS = {
+    "app_title": "KopiTehnik Convertisseur",
     "app_subtitle": "Photos et documents en JPG, PNG, TIFF ou PDF avec correction des couleurs",
     "theme_toggle": "Thème clair ou sombre",
     "browse": "Choisir un dossier",

@@ -1,5 +1,6 @@
 """Türkçe. Keys missing here fall back to English (see tr() in i18n.py)."""
 TEXTS = {
+    "app_title": "KopiTehnik Dönüştürücü",
     "app_subtitle": "Fotoğraf ve belgeleri renk düzeltmesiyle JPG, PNG, TIFF veya PDF'ye çevirin",
     "theme_toggle": "Açık veya koyu tema",
     "browse": "Klasör seç",

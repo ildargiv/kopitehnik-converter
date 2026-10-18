@@ -1,89 +1,92 @@
-# КопиТехник Конвертор
+# KopiTehnik Converter
 
-**Бесплатная программа для Windows для профессиональной печати в фотоцентрах: пакетная конвертация, цвет, листы для печати, кадрирование мышью, редактор PDF с распознаванием сканов и печать с предпросмотром. Управляется и человеком, и ИИ-агентом.**
+**Languages:** English · [Русский](README.ru.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Français](README.fr.md) · [Português](README.pt.md) · [Türkçe](README.tr.md) · [中文](README.zh.md)
 
-*English: free Windows software for photo labs and print shops. Batch-convert photos and documents to JPG/PNG/TIFF/PDF, colour-correct, lay out multi-photo print sheets (10x15, ID photos, contact sheets), edit PDF and print with preview. It is also an MCP server, so AI agents (Claude, Hermes, Cursor and others) can run the whole workflow through tools. Licence: AGPL-3.0.*
+**Free Windows software for photo labs and print shops: batch conversion, colour correction, print sheets, mouse cropping, a PDF editor with scan recognition, and print with preview. Driven by a person or by an AI agent.**
 
-![Цветокоррекция в реальном времени](docs/images/demo.gif)
+Convert photos and documents to JPG/PNG/TIFF/PDF, lay out multi-photo print sheets (10x15, ID photos, contact sheets), edit PDF and print. It is also an MCP server, so AI agents (Claude, Hermes, Cursor and others) can run the whole workflow through tools. Licence: AGPL-3.0.
 
-| Главное окно | Лист 10×15 с метками реза |
+![Live colour correction](docs/images/demo.gif)
+
+| Main window | 10x15 sheet with cut marks |
 |---|---|
-| ![Главное окно](docs/images/main.png) | ![Лист для печати](docs/images/sheet.png) |
-| ![Цвет](docs/images/color.png) | ![Светлая тема](docs/images/light.png) |
+| ![Main window](docs/images/main.png) | ![Print sheet](docs/images/sheet.png) |
+| ![Colour](docs/images/color.png) | ![Light theme](docs/images/light.png) |
 
-*Скриншоты сделаны на сгенерированных тестовых изображениях.*
+*Screenshots were made with generated test images.*
 
-## Что нового в версии 3.0
-- **Распознавание сканов прямо в редакторе PDF.** Кнопка «Распознать скан» (и для JPG, PNG, TIFF: выбираешь файл и нажимаешь ту же кнопку над просмотром). Скан выпрямляется, обрезается по листу, очищается от шума и теней, строки распознаются (русский и английский, локально, без интернета и облака, RapidOCR с моделями PaddleOCR внутри программы) и становятся обычными блоками редактора: их можно править, двигать, добавлять. Пока строка не тронута, видна картинка скана, а текст лежит невидимым слоем для поиска; изменённая строка закрывает старую белым.
-- **Проверка реквизитов.** Подсвечивает жёлтым то, что вызывает сомнение: ИНН, ОГРН и ОГРНИП по контрольным числам, КПП, БИК, счёт, несуществующие даты, сумму цифрами против суммы прописью, латиницу вперемешку с кириллицей, букву вместо цифры. Кнопка «Сомнительное» и клавиша Tab ходят по таким строкам, «Всё верно» снимает пометку.
-- **Сохранение текста.** Из редактора в Word (.docx, таблицы со сканов становятся настоящими таблицами Word), в Excel (.xlsx, отдельный лист на страницу, числа числами) или в простой текст.
-- **Редактор на весь экран** (F11): масштаб Ctrl и колесом мыши, перемещение страницы средней кнопкой, «По ширине».
-- **Кадрирование мышью:** проведи по фото, и рисуется рамка с ручками; формат (10×15 и др.) сохраняет пропорции. Кнопка «Кадрировать» у рамки показывает готовый кадр, «Править рамку» возвращает. Стрелки двигают рамку на 1 пиксель (Shift: на 10), Ctrl+стрелки меняют размер.
-- **Точная рамка на весь экран:** фото во всё окно, масштаб до 24 раз, рамка мышью, стрелками или числами в пикселях.
-- **Наклон** фото на ±45° (завал горизонта) с автоматической обрезкой пустых углов.
-- **Отмена и возврат** (Ctrl+Z, Ctrl+Y и кнопки) для рамки, кадрирования, наклона и поворота.
-- **MCP:** исправлены `print_files` с `color: "gray"` и поиск `pdf_find_text` по тексту, записанному `pdf_edit` (пробелы больше не превращаются в неразрывные).
+## What is new in 3.0
+- **Scan recognition inside the PDF editor.** Press "Recognize scan" (also for JPG, PNG, TIFF). The scan is straightened, cropped to the sheet and cleaned of noise and shadows; lines are recognized (Russian and English, locally, no internet or cloud, RapidOCR with PaddleOCR models bundled) and become ordinary editor blocks you can edit, move and add. While a line is untouched you see the scan image and the text sits as an invisible searchable layer; an edited line covers the old one in white.
+- **Requisites check.** Highlights in yellow what looks doubtful: Russian tax and registration numbers by checksum, bank codes and accounts, impossible dates, amount in digits vs in words, Latin mixed with Cyrillic, a letter instead of a digit. The "Doubtful" button and Tab step through them, "All correct" clears the mark.
+- **Saving text.** From the editor to Word (.docx, tables from scans become real Word tables), Excel (.xlsx, one sheet per page, numbers as numbers) or plain text.
+- **Full-screen editor** (F11): Ctrl+wheel zoom, middle-button panning, "Fit width".
+- **Mouse cropping:** drag over the photo to draw a frame with handles; a format (10x15 etc.) keeps the proportions. Arrow keys move the frame by 1 pixel (Shift: 10), Ctrl+arrows resize it.
+- **Precise full-screen frame:** photo fills the window, zoom up to 24x, frame by mouse, arrows or pixel values.
+- **Tilt** of ±45° (horizon fix) with automatic cropping of empty corners.
+- **Undo and redo** (Ctrl+Z, Ctrl+Y) for frame, crop, tilt and rotation.
+- **MCP:** fixed `print_files` with `color: "gray"` and `pdf_find_text` search in text written by `pdf_edit`.
 
-## Зачем он фотоцентру
-Типовой день приёмщика: клиент приносит флешку с HEIC с телефона, PSD, сканы, Word и PDF. Всё нужно привести к одному виду, подправить цвет, разложить на листы 10×15 или фото на документы, поставить метки реза и отправить на принтер. Конвертор делает это одной программой и одним проходом по папке.
-- **Приём любых файлов:** JPG, PNG, WebP, BMP, GIF, TIFF, HEIC, PSD, PDF, SVG, TXT, HTML, XLSX, архивы ZIP (RAR и 7z при установленных 7-Zip или WinRAR), документы Word, PowerPoint и Excel через Microsoft Office или LibreOffice.
-- **Цвет:** автокоррекция, пипетка баланса белого, яркость, контраст, насыщенность, средние тона, отдельно красный, зелёный, синий, голубой, пурпурный и жёлтый. Встроенный ICC-профиль фото учитывается и переводится в sRGB.
-- **Печатный лист:** готовые раскладки (фото 10×15 и 9×12 на A4, 3×4, 3,5×4,5 и 4×6 на документы, контрольный лист), своя сетка или размер, поля, зазор, копии, поворот под ячейку, метки реза, подписи.
-- **Кадр:** обрезка 3:2, 4:3, 5:4, 7:5, 1:1, 16:9, A4 и свой размер в см, мм или дюймах, рамка мышью, наклон, поворот, зеркало.
-- **Печать:** предпросмотр листа на бумаге, выбор принтера и его свойств, бумага A3, A4, A5, A6, 10×15, 13×18, 15×21, 20×30, Letter, поля, копии, диапазон листов, цвет или ч/б, размер «вписать», «заполнить без полей» или реальный по dpi.
-- **Редактор PDF:** вписать текст, взять строку или абзац и исправить или передвинуть, стереть область, распознать скан (локально) и сохранить текст в Word или Excel. Исходный файл не меняется.
-- **Пакетная обработка** в несколько потоков и командная строка: `Converter.exe --convert <папка> <результат>`.
+## Why a photo lab needs it
+A typical day: a customer brings a flash drive with phone HEIC, PSD, scans, Word and PDF. Everything must be made uniform, colour-corrected, laid out on 10x15 sheets or ID-photo sheets, given cut marks and sent to the printer. Converter does it in one program and one pass over the folder.
+- **Any input:** JPG, PNG, WebP, BMP, GIF, TIFF, HEIC, PSD, PDF, SVG, TXT, HTML, XLSX, ZIP archives (RAR and 7z with 7-Zip or WinRAR installed), Word, PowerPoint and Excel through Microsoft Office or LibreOffice.
+- **Colour:** auto-correction, white-balance picker, brightness, contrast, saturation, midtones, separate red, green, blue, cyan, magenta and yellow. The embedded ICC profile is honoured and converted to sRGB.
+- **Print sheet:** ready layouts (10x15 and 9x12 photos on A4, 3x4, 3.5x4.5 and 4x6 ID photos, contact sheet), custom grid or size, margins, gap, copies, rotation to fit the cell, cut marks, captions.
+- **Crop:** 3:2, 4:3, 5:4, 7:5, 1:1, 16:9, A4 and custom size in cm, mm or inches, mouse frame, tilt, rotate, mirror.
+- **Print:** sheet preview on paper, printer choice and its properties, paper A3, A4, A5, A6, 10x15, 13x18, 15x21, 20x30, Letter, margins, copies, page range, colour or B/W, "fit", "fill without margins" or real size by dpi.
+- **PDF editor:** insert text, pick a line or paragraph and fix or move it, erase an area, recognize a scan (locally), save text to Word or Excel. The source file is never changed.
+- **Batch processing** in several threads and a command line: `Converter.exe --convert <folder> <output>`.
 
-## Управление ИИ-агентами (MCP)
-Программа работает как **MCP-сервер**: ИИ-агент получает все функции как инструменты с текстовыми параметрами. Окно и зрение не нужны: результат проверяется числами (размеры, яркость, контраст), текстом PDF и при желании картинкой-превью. Так агенту можно поручить рутину фотоцентра, например: «разложи фото из папки на листы 10×15, проверь яркость, посчитай листы и отправь на принтер после моего подтверждения».
+## Control by AI agents (MCP)
+The program runs as an **MCP server**: an AI agent gets every function as a tool with text parameters. No window or vision is needed: results are checked by numbers (sizes, brightness, contrast), PDF text and, if wanted, a preview picture. For example: "lay out the photos from the folder on 10x15 sheets, check brightness, count the sheets and print after my confirmation".
 
-- Транспорт stdio. Сервер работает только на вашем компьютере и ничего не слушает по сети.
-- Подходит для Claude Desktop, Claude Code, Hermes Agent, Cursor, Cline и любого клиента MCP.
-- Инструменты: `app_info`, `list_files`, `inspect_file`, `convert`, `make_sheet`, `preview`, `pdf_info`, `pdf_get_text`, `pdf_find_text`, `pdf_edit`, `pdf_pages`, `list_printers`, `print_files`.
-- Печать безопасна: у `print_files` есть `dry_run` (только считает листы) и `printer: "pdf"` (пишет в файл). Исходные файлы не меняются.
+- stdio transport. The server runs only on your computer and listens to nothing on the network.
+- Works with Claude Desktop, Claude Code, Hermes Agent, Cursor, Cline and any MCP client.
+- Tools: `app_info`, `list_files`, `inspect_file`, `convert`, `make_sheet`, `preview`, `pdf_info`, `pdf_get_text`, `pdf_find_text`, `pdf_edit`, `pdf_pages`, `list_printers`, `print_files`.
+- Printing is safe: `print_files` has `dry_run` (only counts sheets) and `printer: "pdf"` (writes a file). Source files are never changed.
 
-Подключение: `Converter.exe --mcp`. Готовая настройка есть в «О программе» → «Подключить ИИ-агента». Подробно, с примерами для каждого клиента: [MCP.md](MCP.md).
+Connect with `Converter.exe --mcp`. A ready setup is in About, "Connect an AI agent". Details and examples for each client: [MCP.md](MCP.md).
 
-## Установка
-**[Скачать установщик KopiTehnik-Converter-Setup.exe](https://github.com/ildargiv/kopitehnik-converter/releases/latest)** (раздел Releases): без прав администратора, с ярлыками, удаление через «Приложения». Новые версии выходят в группе https://vk.ru/icc_profil. Программа сама проверяет GitHub при запуске и предлагает обновиться; скачанный установщик сверяется с SHA-256 из выпуска.
+## Install
+**[Download KopiTehnik-Converter-Setup.exe](https://github.com/ildargiv/kopitehnik-converter/releases/latest)** (Releases): no administrator rights, with shortcuts, uninstall from "Apps". New versions are announced at https://vk.ru/icc_profil. The program checks GitHub at start and offers an update; the downloaded installer is verified against the SHA-256 of the release.
 
-### Проверка файла
-Установщик собирает GitHub Actions из открытого кода ([workflow](.github/workflows/release.yml)); к выпуску приложены `SHA256SUMS.txt` и аттестация сборки. Проверить хеш: `certutil -hashfile KopiTehnik-Converter-Setup.exe SHA256`. Отчёт VirusTotal: *ссылка появится после первого выпуска из Actions*. Файл пока не подписан (заявка на бесплатную подпись SignPath готовится), поэтому SmartScreen может показать «Неизвестный издатель»: «Подробнее» → «Выполнить в любом случае». Интерфейс на 8 языках (русский, английский, испанский, немецкий, французский, португальский, турецкий, китайский; язык Windows определяется сам), тёмная и светлая темы.
+The interface is available in 8 languages (Russian, English, Spanish, German, French, Portuguese, Turkish, Chinese; the Windows language is detected automatically, English is the default) with dark and light themes. The program name is translated together with the interface.
 
-## Запуск из исходников
-Нужен Python 3.10 или новее.
+### Verify the file
+The installer is built by GitHub Actions from the open source ([workflow](.github/workflows/release.yml)); the release carries `SHA256SUMS.txt` and a build attestation. Check the hash: `certutil -hashfile KopiTehnik-Converter-Setup.exe SHA256`. The file is not signed yet (a free SignPath application is in preparation), so SmartScreen may show "Unknown publisher": "More info", then "Run anyway".
+
+## Run from source
+Python 3.10 or newer is required.
 
     pip install PySide6 pillow pillow-heif openpyxl pymupdf rapidocr opencv-python
     python app.py
 
-## Сборка exe
+## Build the exe
     pip install pyinstaller
-    pyinstaller converter.spec        # результат в dist\Converter.exe
+    pyinstaller converter.spec        # result in dist\Converter.exe
 
-Полная версия со своим LibreOffice (работает на компьютерах без офиса; папка около 850 МБ, zip около 380 МБ):
+A full build with its own LibreOffice (works on computers without Office; folder about 850 MB, zip about 380 MB):
 
-    python tools/make_full.py [папка LibreOffice]   # результат в dist\Converter-full и dist\Converter-full.zip
+    python tools/make_full.py [LibreOffice folder]   # result in dist\Converter-full and dist\Converter-full.zip
 
-Без аргумента берётся LibreOffice, установленный на этом компьютере. Подойдёт и переносная версия (LibreOffice Portable): укажите её папку `App\libreoffice`.
+Without an argument the LibreOffice installed on this computer is used. A portable LibreOffice also works: give its `App\libreoffice` folder.
 
-## Устройство
-- `core/loaders.py` — чтение файлов любого формата в страницы
-- `core/office.py` — поиск Microsoft Office и LibreOffice, документы в PDF
-- `core/imaging.py` — цвет, поворот, обрезка, сохранение
-- `core/sheet.py` — несколько фото на одном листе
-- `core/batch.py` — поиск файлов, архивы, пакетная обработка в нескольких потоках, вывод в PDF
-- `ui/main_window.py` — главное окно; `ui/programs.py` — окно «Программы»; `ui/printing.py` — печать; `ui/pdf_editor.py` — редактор PDF
-- `ui/widgets.py`, `ui/theme.py`, `ui/i18n.py` — виджеты, тема, тексты интерфейса; `ui/crop_dialog.py` — точная рамка на весь экран
-- `core/ocr.py` — подготовка скана и распознавание (RapidOCR); `core/requisites.py` — проверка ИНН, ОГРН, дат и сумм; `core/textexport.py` — сохранение текста в Word, Excel и txt
-- `tools/make_test_scan.py` — делает придуманный скан договора для проверки распознавания
-- `core/mcp_server.py`, `core/mcp_tools.py`, `core/pdftools.py`, `core/printjob.py` — MCP-сервер, его инструменты, правка PDF и печать без окна
-- `tools/make_full.py` — полная сборка с LibreOffice
+## Structure
+- `core/loaders.py` reads files of any format into pages; `core/office.py` finds Microsoft Office and LibreOffice and turns documents into PDF
+- `core/imaging.py` colour, rotation, crop, saving; `core/sheet.py` several photos on one sheet
+- `core/batch.py` file search, archives, multi-threaded batch, PDF output
+- `ui/main_window.py` main window; `ui/programs.py` programs window; `ui/printing.py` printing; `ui/pdf_editor.py` PDF editor; `ui/crop_dialog.py` precise frame
+- `ui/widgets.py`, `ui/theme.py`, `ui/i18n.py` (+ `ui/i18n_<lang>.py`) widgets, theme, interface texts
+- `core/ocr.py` scan preparation and recognition (RapidOCR); `core/requisites.py` checks of tax numbers, dates and amounts; `core/textexport.py` saving text to Word, Excel and txt
+- `tools/make_test_scan.py` makes an invented contract scan to test recognition
+- `core/mcp_server.py`, `core/mcp_tools.py`, `core/pdftools.py`, `core/printjob.py` MCP server, its tools, PDF editing and windowless printing
+- `tools/make_full.py` full build with LibreOffice
 
-## Лицензия
-Copyright (C) Гайсин Ильдар Вильсурович. Программа свободная, распространяется на условиях GNU Affero General Public License v3 (файл `LICENSE`): её можно бесплатно использовать, изучать, изменять и распространять, исходный код должен оставаться открытым. Лицензии сторонних библиотек: `THIRD_PARTY_NOTICES.txt`.
+### Adding a language
+Create `ui/i18n_<code>.py` with `TEXTS = {...}` (copy `ui/i18n_de.py` and translate the values; missing keys fall back to English), then add the code and its native name to `LANGUAGES` in `ui/i18n.py`. Set `app_title` to the translated program name.
 
-## Автор
-**Гайсин Ильдар Вильсурович**, разработчик программы, КопиТехник: фотоцентр и профессиональная печать.
-Новости, новые версии и связь: группа ВКонтакте https://vk.ru/icc_profil
+## Licence
+Copyright (C) Ildar Gaisin (Gaisin Ildar Vilsurovich). Free software under the GNU Affero General Public License v3 (file `LICENSE`): free to use, study, modify and distribute; the source must stay open. Third-party licences: `THIRD_PARTY_NOTICES.txt`.
 
-*Author: Ildar Gaisin (Gaisin Ildar Vilsurovich), developer of KopiTehnik Converter, a photo lab and professional printing company. News and releases: https://vk.ru/icc_profil*
+## Author
+**Ildar Gaisin (Gaisin Ildar Vilsurovich)**, developer of KopiTehnik Converter, a photo lab and professional printing company.
+News, releases and contact: VK group https://vk.ru/icc_profil
