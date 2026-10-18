@@ -1,5 +1,5 @@
 """Program version and where updates are announced."""
-VERSION = "3.3"
+VERSION = "3.4"
 
 # Group where new versions are published (shown in "About").
 GROUP_URL = "https://vk.ru/icc_profil"
