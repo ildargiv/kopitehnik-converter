@@ -42,6 +42,14 @@ from .widgets import (
 from core.version import VERSION as APP_VERSION
 PREVIEW_SIZE = 1600
 
+# One-click corrections: slider values (-100..100, "auto" 0..100); missing sliders are reset to 0.
+COLOR_PRESETS: dict[str, dict[str, int]] = {
+    "auto": {"auto": 100},
+    "super": {"auto": 100, "contrast": 15, "saturation": 25, "gamma": 8},
+    "bw": {"auto": 60, "contrast": 15, "saturation": -100},
+    "vivid": {"contrast": 10, "saturation": 40},
+}
+
 COLOR_SLIDERS = [
     ("auto", None), ("brightness", None), ("contrast", None), ("saturation", None), ("gamma", None),
 ]
@@ -622,6 +630,13 @@ class MainWindow(QMainWindow):
         self.wb_label = QLabel()
         self.wb_label.setObjectName("hint")
         c.add(self.wb_label)
+        presets = QHBoxLayout()
+        presets.setSpacing(6)
+        for name in COLOR_PRESETS:
+            btn = self._bind(AnimatedButton(), "preset_" + name)
+            btn.clicked.connect(lambda _=False, n=name: self._apply_preset(n))
+            presets.addWidget(btn, 1)
+        c.add(presets)
         self.sliders: dict[str, SliderRow] = {}
         for key, color in COLOR_SLIDERS:
             s = SliderRow(key, "", minimum=0 if key == "auto" else -100, color=color)
@@ -1366,6 +1381,13 @@ class MainWindow(QMainWindow):
             self.settings.color = c
         self._update_scope_ui()
         self._schedule_preview()
+
+    def _apply_preset(self, name: str):
+        """One-click correction: set the sliders to the preset and keep the picked white balance."""
+        values = COLOR_PRESETS[name]
+        for k, row in self.sliders.items():
+            row.set_value(values.get(k, 0), silent=True)
+        self._color_changed()
 
     # ---- white balance pipette
     def _pipette_toggled(self, on: bool):
