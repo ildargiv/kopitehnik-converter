@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KopiTehnik Converter</title>
+<meta name="description" content="Free Windows software for photo labs and print shops.">
+<link rel="icon" href="images/main.png">
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#1c2030;--muted:#5b6275;--accent:#2f6bff;--accent-t:#fff;--line:#e2e5ee}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#12141c;--card:#1b1e29;--text:#e8eaf2;--muted:#9aa1b5;--accent:#5b8cff;--accent-t:#0b0d14;--line:#2a2e3d}}
+:root[data-theme=dark]{--bg:#12141c;--card:#1b1e29;--text:#e8eaf2;--muted:#9aa1b5;--accent:#5b8cff;--accent-t:#0b0d14;--line:#2a2e3d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,"Segoe UI",Roboto,"Noto Sans","Noto Sans JP","Noto Sans SC",sans-serif}
+a{color:var(--accent)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+header{border-bottom:1px solid var(--line);background:var(--card)}
+header .wrap{display:flex;align-items:center;gap:12px;justify-content:space-between;padding-top:12px;padding-bottom:12px;flex-wrap:wrap}
+.brand{font-weight:700}
+.tools{display:flex;gap:8px;align-items:center}
+select,button.theme{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer}
+.hero{padding:56px 0 32px;text-align:center}
+.hero h1{font-size:clamp(28px,5vw,44px);margin:0 0 12px}
+.hero p{max-width:720px;margin:0 auto 24px;color:var(--muted);font-size:1.1rem}
+.btn{display:inline-block;background:var(--accent);color:var(--accent-t);text-decoration:none;font-weight:700;padding:14px 28px;border-radius:12px}
+.btn.alt{background:transparent;color:var(--accent);border:1px solid var(--accent);margin-left:8px}
+.note{color:var(--muted);font-size:.9rem;margin-top:12px}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin:24px 0}
+.shots img,.demo{width:100%;height:auto;border-radius:12px;border:1px solid var(--line);display:block}
+h2{font-size:1.6rem;margin:48px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.card h3{margin:0 0 6px;font-size:1.05rem}
+.card p{margin:0;color:var(--muted);font-size:.95rem}
+.cta{text-align:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:32px 16px;margin:48px 0}
+footer{border-top:1px solid var(--line);padding:24px 0;color:var(--muted);font-size:.9rem;text-align:center}
+footer a{margin:0 6px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <span class="brand" data-i="name">KopiTehnik Converter</span>
+  <div class="tools">
+    <select id="lang" aria-label="Language"></select>
+    <button class="theme" id="theme" type="button" aria-label="Theme">◐</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1 data-i="h1"></h1>
+    <p data-i="lead"></p>
+    <a class="btn" href="https://github.com/ildargiv/kopitehnik-converter/releases/latest" data-i="download"></a>
+    <a class="btn alt" href="https://github.com/ildargiv/kopitehnik-converter" data-i="source"></a>
+    <div class="note" data-i="dlnote"></div>
+  </section>
+
+  <img class="demo" src="images/demo.gif" alt="">
+  <div class="shots">
+    <img src="images/main.png" alt="" loading="lazy">
+    <img src="images/sheet.png" alt="" loading="lazy">
+    <img src="images/color.png" alt="" loading="lazy">
+    <img src="images/light.png" alt="" loading="lazy">
+  </div>
+
+  <h2 data-i="featuresH"></h2>
+  <div class="grid" id="features"></div>
+
+  <div class="cta">
+    <h2 style="margin-top:0" data-i="installH"></h2>
+    <p data-i="installP"></p>
+    <a class="btn" href="https://github.com/ildargiv/kopitehnik-converter/releases/latest" data-i="download"></a>
+  </div>
+</main>
+
+<footer><div class="wrap">
+  <div data-i="langs"></div>
+  <div><a href="https://github.com/ildargiv/kopitehnik-converter">GitHub</a><a href="https://vk.ru/icc_profil">VK</a><a href="https://github.com/ildargiv/kopitehnik-converter/blob/main/LICENSE">AGPL-3.0</a></div>
+  <div>© Ildar Gaisin</div>
+</div></footer>
+
+<script>
+var LANGS={ru:"Русский",en:"English",de:"Deutsch",es:"Español",fr:"Français",pt:"Português",tr:"Türkçe",zh:"中文",ja:"日本語"};
+var T={
+en:{h1:"KopiTehnik Converter",lead:"Free Windows software for photo labs and print shops: batch conversion, colour correction, print sheets, mouse cropping, a PDF editor with scan recognition, and print with preview. Driven by a person or by an AI agent.",download:"Download v3.4",source:"Source on GitHub",dlnote:"Windows · no administrator rights · AGPL-3.0 · SmartScreen may show \"Unknown publisher\": More info, Run anyway",featuresH:"What it does",
+f:[["Any input","JPG, PNG, WebP, TIFF, HEIC, PSD, PDF, SVG, TXT, HTML, XLSX, ZIP, Word, PowerPoint and Excel (via Office or LibreOffice)."],["Colour","Auto-correction, white balance, brightness, contrast, saturation, separate channels. The embedded ICC profile is honoured and converted to sRGB."],["Print sheets","10x15 and 9x12 on A4, ID photos, contact sheet, custom grid, cut marks, captions."],["Cropping","Mouse frame, fixed formats, tilt ±45°, rotate, mirror, undo and redo."],["PDF editor","Insert, fix and move text, erase areas, recognize scans locally (no cloud), save to Word or Excel."],["Print","Sheet preview on paper, printer choice, paper sizes, margins, copies, colour or B/W."],["Batch and CLI","Multi-threaded processing of whole folders and a command line."],["AI agents (MCP)","Claude, Cursor, Hermes and other MCP clients run the whole workflow through tools. Printing has a safe dry run."]],
+installH:"Install",installP:"The interface speaks 9 languages with dark and light themes. The program checks for updates at start and verifies the installer by SHA-256.",langs:"Interface languages: Русский · English · Deutsch · Español · Français · Português · Türkçe · 中文 · 日本語"},
+ru:{h1:"KopiTehnik Converter",lead:"Бесплатная программа для Windows для фотолабораторий и типографий: пакетная конвертация, цветокоррекция, листы для печати, кадрирование мышью, редактор PDF с распознаванием сканов и печать с предпросмотром. Работает по команде человека или ИИ-агента.",download:"Скачать v3.4",source:"Исходный код на GitHub",dlnote:"Windows · права администратора не нужны · AGPL-3.0 · SmartScreen может показать «Неизвестный издатель»: Подробнее, Выполнить в любом случае",featuresH:"Возможности",
+f:[["Любые входные файлы","JPG, PNG, WebP, TIFF, HEIC, PSD, PDF, SVG, TXT, HTML, XLSX, ZIP, Word, PowerPoint и Excel (через Office или LibreOffice)."],["Цвет","Автокоррекция, баланс белого, яркость, контраст, насыщенность, отдельные каналы. Встроенный ICC-профиль учитывается и переводится в sRGB."],["Листы для печати","10x15 и 9x12 на A4, фото на документы, контактный лист, своя сетка, метки реза, подписи."],["Кадрирование","Рамка мышью, готовые форматы, наклон ±45°, поворот, зеркало, отмена и повтор."],["Редактор PDF","Вставка, правка и перенос текста, стирание областей, локальное распознавание сканов (без облака), сохранение в Word или Excel."],["Печать","Предпросмотр листа на бумаге, выбор принтера, форматы бумаги, поля, копии, цвет или ч/б."],["Пакетная обработка","Многопоточная обработка целых папок и командная строка."],["ИИ-агенты (MCP)","Claude, Cursor, Hermes и другие MCP-клиенты выполняют весь процесс через инструменты. Печать имеет безопасный пробный режим."]],
+installH:"Установка",installP:"Интерфейс на 9 языках, тёмная и светлая темы. Программа проверяет обновления при запуске и сверяет установщик по SHA-256.",langs:"Языки интерфейса: Русский · English · Deutsch · Español · Français · Português · Türkçe · 中文 · 日本語"},
+de:{h1:"KopiTehnik Konverter",lead:"Kostenlose Windows-Software für Fotolabore und Druckereien: Stapelkonvertierung, Farbkorrektur, Druckbögen, Zuschnitt mit der Maus, PDF-Editor mit Scan-Erkennung und Druck mit Vorschau. Bedienbar per Hand oder durch einen KI-Agenten.",download:"v3.4 herunterladen",source:"Quellcode auf GitHub",dlnote:"Windows · keine Administratorrechte · AGPL-3.0 · SmartScreen zeigt evtl. „Unbekannter Herausgeber“: Weitere Informationen, Trotzdem ausführen",featuresH:"Funktionen",
+f:[["Beliebige Eingaben","JPG, PNG, WebP, TIFF, HEIC, PSD, PDF, SVG, TXT, HTML, XLSX, ZIP, Word, PowerPoint und Excel (über Office oder LibreOffice)."],["Farbe","Auto-Korrektur, Weißabgleich, Helligkeit, Kontrast, Sättigung, Einzelfarben. Das eingebettete ICC-Profil wird berücksichtigt und nach sRGB umgerechnet."],["Druckbögen","10×15 und 9×12 auf A4, Passbilder, Kontaktbogen, eigenes Raster, Schnittmarken, Beschriftungen."],["Zuschnitt","Mausrahmen, feste Formate, Neigung ±45°, Drehen, Spiegeln, Rückgängig und Wiederholen."],["PDF-Editor","Text einfügen, ändern und verschieben, Bereiche löschen, Scans lokal erkennen (ohne Cloud), als Word oder Excel speichern."],["Druck","Bogenvorschau auf Papier, Druckerwahl, Papierformate, Ränder, Kopien, Farbe oder S/W."],["Stapel und Kommandozeile","Mehrfädige Verarbeitung ganzer Ordner und Kommandozeile."],["KI-Agenten (MCP)","Claude, Cursor, Hermes und andere MCP-Clients steuern den ganzen Ablauf über Werkzeuge. Der Druck hat einen sicheren Probelauf."]],
+installH:"Installation",installP:"Die Oberfläche gibt es in 9 Sprachen mit dunklem und hellem Design. Das Programm sucht beim Start nach Updates und prüft den Installer per SHA-256.",langs:"Oberflächensprachen: Русский · English · Deutsch · Español · Français · Português · Türkçe · 中文 · 日本語"},
+es:{h1:"KopiTehnik Conversor",lead:"Software gratuito para Windows para laboratorios fotográficos e imprentas: conversión por lotes, corrección de color, hojas de impresión, recorte con el ratón, editor de PDF con reconocimiento de escaneos e impresión con vista previa. Se maneja a mano o con un agente de IA.",download:"Descargar v3.4",source:"Código en GitHub",dlnote:"Windows · sin derechos de administrador · AGPL-3.0 · SmartScreen puede mostrar «Editor desconocido»: Más información, Ejecutar de todas formas",featuresH:"Qué hace",
+f:[["Cualquier entrada","JPG, PNG, WebP, TIFF, HEIC, PSD, PDF, SVG, TXT, HTML, XLSX, ZIP, Word, PowerPoint y Excel (con Office o LibreOffice)."],["Color","Autocorrección, balance de blancos, brillo, contraste, saturación, canales por separado. Se respeta el perfil ICC incrustado y se convierte a sRGB."],["Hojas de impresión","10x15 y 9x12 en A4, fotos de carné, hoja de contactos, cuadrícula propia, marcas de corte, pies de foto."],["Recorte","Marco con el ratón, formatos fijos, inclinación ±45°, girar, voltear, deshacer y rehacer."],["Editor de PDF","Insertar, corregir y mover texto, borrar zonas, reconocer escaneos en local (sin nube), guardar en Word o Excel."],["Impresión","Vista previa de la hoja en papel, elección de impresora, tamaños de papel, márgenes, copias, color o B/N."],["Lotes y línea de comandos","Procesamiento multihilo de carpetas enteras y línea de comandos."],["Agentes de IA (MCP)","Claude, Cursor, Hermes y otros clientes MCP ejecutan todo el flujo mediante herramientas. La impresión tiene una simulación segura."]],
+installH:"Instalación",installP:"La interfaz está en 9 idiomas con temas oscuro y claro. El programa busca actualizaciones al iniciar y verifica el instalador con SHA-256.",langs:"Idiomas de la interfaz: Русский · English · Deutsch · Español · Français · Português · Türkçe · 中文 · 日本語"},
+fr:{h1:"KopiTehnik Convertisseur",lead:"Logiciel Windows gratuit pour les labos photo et les imprimeries : conversion par lots, correction des couleurs, planches d'impression, recadrage à la souris, éditeur PDF avec reconnaissance de scans et impression avec aperçu. Utilisable à la main ou par un agent IA.",download:"Télécharger v3.4",source:"Code source sur GitHub",dlnote:"Windows · sans droits d'administrateur · AGPL-3.0 · SmartScreen peut afficher « Éditeur inconnu » : Informations complémentaires, Exécuter quand même",featuresH:"Fonctions",
+f:[["Tous les formats","JPG, PNG, WebP, TIFF, HEIC, PSD, PDF, SVG, TXT, HTML, XLSX, ZIP, Word, PowerPoint et Excel (via Office ou LibreOffice)."],["Couleur","Correction auto, balance des blancs, luminosité, contraste, saturation, canaux séparés. Le profil ICC intégré est respecté et converti en sRGB."],["Planches d'impression","10x15 et 9x12 sur A4, photos d'identité, planche-contact, grille libre, repères de coupe, légendes."],["Recadrage","Cadre à la souris, formats fixes, inclinaison ±45°, rotation, miroir, annuler et rétablir."],["Éditeur PDF","Insérer, corriger et déplacer du texte, effacer des zones, reconnaître les scans en local (sans cloud), enregistrer en Word ou Excel."],["Impression","Aperçu de la planche sur papier, choix de l'imprimante, formats de papier, marges, copies, couleur ou N&B."],["Lots et ligne de commande","Traitement multithread de dossiers entiers et ligne de commande."],["Agents IA (MCP)","Claude, Cursor, Hermes et d'autres clients MCP pilotent tout le flux par des outils. L'impression offre un essai à blanc sûr."]],
+installH:"Installation",installP:"L'interface existe en 9 langues avec thèmes sombre et clair. Le programme cherche les mises à jour au démarrage et vérifie l'installateur par SHA-256.",langs:"Langues de l'interface : Русский · English · Deutsch · Español · Français · Português · Türkçe · 中文 · 日本語"},
+pt:{h1:"KopiTehnik Conversor",lead:"Software gratuito para Windows para laboratórios fotográficos e gráficas: conversão em lote, correção de cor, folhas de impressão, recorte com o rato, editor de PDF com reconhecimento de digitalizações e impressão com pré-visualização. Usado à mão ou por um agente de IA.",download:"Baixar v3.4",source:"Código no GitHub",dlnote:"Windows · sem direitos de administrador · AGPL-3.0 · o SmartScreen pode mostrar «Editor desconhecido»: Mais informações, Executar mesmo assim",featuresH:"O que faz",
+f:[["Qualquer entrada","JPG, PNG, WebP, TIFF, HEIC, PSD, PDF, SVG, TXT, HTML, XLSX, ZIP, Word, PowerPoint e Excel (via Office ou LibreOffice)."],["Cor","Correção automática, balanço de brancos, brilho, contraste, saturação, canais separados. O perfil ICC incorporado é respeitado e convertido para sRGB."],["Folhas de impressão","10x15 e 9x12 em A4, fotos de documento, folha de contactos, grelha própria, marcas de corte, legendas."],["Recorte","Moldura com o rato, formatos fixos, inclinação ±45°, rodar, espelhar, desfazer e refazer."],["Editor de PDF","Inserir, corrigir e mover texto, apagar áreas, reconhecer digitalizações localmente (sem nuvem), guardar em Word ou Excel."],["Impressão","Pré-visualização da folha no papel, escolha da impressora, tamanhos de papel, margens, cópias, cor ou P/B."],["Lote e linha de comandos","Processamento multithread de pastas inteiras e linha de comandos."],["Agentes de IA (MCP)","Claude, Cursor, Hermes e outros clientes MCP executam todo o fluxo por ferramentas. A impressão tem uma simulação segura."]],
+installH:"Instalação",installP:"A interface está em 9 idiomas com temas escuro e claro. O programa procura atualizações ao iniciar e verifica o instalador por SHA-256.",langs:"Idiomas da interface: Русский · English · Deutsch · Español · Français · Português · Türkçe · 中文 · 日本語"},
+tr:{h1:"KopiTehnik Dönüştürücü",lead:"Fotoğraf laboratuvarları ve matbaalar için ücretsiz Windows yazılımı: toplu dönüştürme, renk düzeltme, baskı sayfaları, fareyle kırpma, tarama tanımalı PDF düzenleyici ve önizlemeli yazdırma. Elle ya da bir yapay zekâ ajanıyla kullanılır.",download:"v3.4 indir",source:"GitHub'da kaynak kod",dlnote:"Windows · yönetici hakkı gerekmez · AGPL-3.0 · SmartScreen «Bilinmeyen yayımcı» gösterebilir: Daha fazla bilgi, Yine de çalıştır",featuresH:"Neler yapar",
+f:[["Her türlü girdi","JPG, PNG, WebP, TIFF, HEIC, PSD, PDF, SVG, TXT, HTML, XLSX, ZIP, Word, PowerPoint ve Excel (Office veya LibreOffice ile)."],["Renk","Otomatik düzeltme, beyaz dengesi, parlaklık, kontrast, doygunluk, ayrı kanallar. Gömülü ICC profili dikkate alınır ve sRGB'ye çevrilir."],["Baskı sayfaları","A4'te 10x15 ve 9x12, vesikalık fotoğraf, kontak sayfası, özel ızgara, kesim işaretleri, alt yazılar."],["Kırpma","Fareyle çerçeve, sabit formatlar, ±45° eğim, döndürme, yansıtma, geri al ve yinele."],["PDF düzenleyici","Metin ekleme, düzeltme ve taşıma, alan silme, taramaları yerelde tanıma (bulutsuz), Word veya Excel'e kaydetme."],["Yazdırma","Sayfanın kağıt üzerinde önizlemesi, yazıcı seçimi, kağıt boyutları, kenar boşlukları, kopya, renkli veya siyah-beyaz."],["Toplu işlem ve komut satırı","Tüm klasörlerin çok iş parçacıklı işlenmesi ve komut satırı."],["Yapay zekâ ajanları (MCP)","Claude, Cursor, Hermes ve diğer MCP istemcileri tüm akışı araçlarla yürütür. Yazdırmada güvenli deneme modu vardır."]],
+installH:"Kurulum",installP:"Arayüz koyu ve açık temalarla 9 dilde sunulur. Program açılışta güncellemeleri denetler ve yükleyiciyi SHA-256 ile doğrular.",langs:"Arayüz dilleri: Русский · English · Deutsch · Español · Français · Português · Türkçe · 中文 · 日本語"},
+zh:{h1:"KopiTehnik 转换器",lead:"面向照片冲印店和印刷店的免费 Windows 软件:批量转换、色彩校正、排版打印、鼠标裁剪、带扫描件识别的 PDF 编辑器,以及带预览的打印。可手动操作,也可由 AI 代理驱动。",download:"下载 v3.4",source:"GitHub 源代码",dlnote:"Windows · 无需管理员权限 · AGPL-3.0 · SmartScreen 可能显示“未知发布者”:点击“更多信息”,再选“仍要运行”",featuresH:"功能",
+f:[["任意输入","JPG、PNG、WebP、TIFF、HEIC、PSD、PDF、SVG、TXT、HTML、XLSX、ZIP、Word、PowerPoint 和 Excel(通过 Office 或 LibreOffice)。"],["色彩","自动校正、白平衡、亮度、对比度、饱和度、单独通道。遵循内嵌 ICC 配置文件并转换为 sRGB。"],["打印版面","A4 上的 10x15 和 9x12、证件照、联系表、自定义网格、裁切标记、图注。"],["裁剪","鼠标画框、固定比例、±45° 倾斜、旋转、镜像、撤销与重做。"],["PDF 编辑器","插入、修改和移动文字,擦除区域,本地识别扫描件(无需云端),保存为 Word 或 Excel。"],["打印","纸张上的版面预览、选择打印机、纸张尺寸、页边距、份数、彩色或黑白。"],["批处理与命令行","多线程处理整个文件夹,并支持命令行。"],["AI 代理(MCP)","Claude、Cursor、Hermes 等 MCP 客户端通过工具完成整个流程。打印提供安全的试运行。"]],
+installH:"安装",installP:"界面支持 9 种语言,含深色和浅色主题。程序启动时检查更新,并通过 SHA-256 校验安装包。",langs:"界面语言:Русский · English · Deutsch · Español · Français · Português · Türkçe · 中文 · 日本語"},
+ja:{h1:"KopiTehnik コンバーター",lead:"フォトラボや印刷所向けの無料 Windows ソフト:一括変換、色補正、プリントシート、マウスでのトリミング、スキャン認識付き PDF エディター、プレビュー付き印刷。手作業でも AI エージェントからでも操作できます。",download:"v3.4 をダウンロード",source:"GitHub のソースコード",dlnote:"Windows · 管理者権限不要 · AGPL-3.0 · SmartScreen に「不明な発行元」と表示された場合は「詳細情報」から「実行」を選びます",featuresH:"主な機能",
+f:[["あらゆる入力","JPG、PNG、WebP、TIFF、HEIC、PSD、PDF、SVG、TXT、HTML、XLSX、ZIP、Word、PowerPoint、Excel(Office または LibreOffice 経由)。"],["色","自動補正、ホワイトバランス、明るさ、コントラスト、彩度、個別チャンネル。埋め込み ICC プロファイルを尊重し sRGB に変換します。"],["プリントシート","A4 に 10x15 と 9x12、証明写真、コンタクトシート、任意のグリッド、トンボ、キャプション。"],["トリミング","マウスで枠指定、固定フォーマット、±45° の傾き、回転、反転、元に戻す/やり直し。"],["PDF エディター","テキストの挿入・修正・移動、範囲の消去、スキャンのローカル認識(クラウド不使用)、Word または Excel への保存。"],["印刷","用紙上のシートプレビュー、プリンター選択、用紙サイズ、余白、部数、カラーまたは白黒。"],["一括処理とコマンドライン","フォルダー全体のマルチスレッド処理とコマンドライン。"],["AI エージェント(MCP)","Claude、Cursor、Hermes などの MCP クライアントがツール経由で全工程を実行。印刷には安全なドライランがあります。"]],
+installH:"インストール",installP:"インターフェースは 9 言語、ダークとライトのテーマに対応。起動時に更新を確認し、インストーラーを SHA-256 で検証します。",langs:"表示言語:Русский · English · Deutsch · Español · Français · Português · Türkçe · 中文 · 日本語"}
+};
+(function(){
+  var sel=document.getElementById("lang"),root=document.documentElement;
+  Object.keys(LANGS).forEach(function(k){var o=document.createElement("option");o.value=k;o.textContent=LANGS[k];sel.appendChild(o)});
+  function safe(f){try{return f()}catch(e){return null}}
+  function pick(){
+    var q=new URLSearchParams(location.search).get("lang");
+    if(q&&T[q])return q;
+    var s=safe(function(){return localStorage.getItem("lang")});
+    if(s&&T[s])return s;
+    var l=(navigator.languages||[navigator.language||"en"]);
+    for(var i=0;i<l.length;i++){var c=String(l[i]).slice(0,2).toLowerCase();if(T[c])return c}
+    return "en";
+  }
+  function apply(code){
+    var t=T[code];root.lang=code;sel.value=code;
+    document.title=t.h1;
+    document.querySelectorAll("[data-i]").forEach(function(e){var k=e.getAttribute("data-i");if(k==="name")e.textContent=t.h1;else if(t[k]!=null)e.textContent=t[k]});
+    document.querySelector("meta[name=description]").content=t.lead;
+    var f=document.getElementById("features");f.textContent="";
+    t.f.forEach(function(x){var d=document.createElement("div");d.className="card";var h=document.createElement("h3");h.textContent=x[0];var p=document.createElement("p");p.textContent=x[1];d.appendChild(h);d.appendChild(p);f.appendChild(d)});
+    document.querySelectorAll("img").forEach(function(i){i.alt=t.h1});
+  }
+  sel.addEventListener("change",function(){safe(function(){localStorage.setItem("lang",sel.value)});apply(sel.value)});
+  document.getElementById("theme").addEventListener("click",function(){
+    var dark=root.dataset.theme?root.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
+    root.dataset.theme=dark?"light":"dark";
+  });
+  apply(pick());
+})();
+</script>
+</body>
+</html>
