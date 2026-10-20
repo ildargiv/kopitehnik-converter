@@ -43,10 +43,21 @@ def _check_updates_quietly(win) -> None:
     checker.start()
 
 
+def _emit(text: str, stream=None) -> None:
+    """Writes a line as UTF-8 bytes: the Windows console (cp1251, cp866...) cannot encode every character of a file name."""
+    stream = stream or sys.stdout
+    data = (text + "\n").encode("utf-8")
+    try:
+        stream.buffer.write(data)
+        stream.flush()
+    except (AttributeError, ValueError, OSError):
+        stream.write(data.decode("utf-8", "replace"))
+
+
 def edit_cli(argv: list[str]) -> int:
     """Converter.exe --edit <file> [--ocr] [--out <result.pdf>]: only the PDF editor, no main window.
 
-    The last stdout line is the saved PDF. Exit code: 0 saved, 1 closed without saving, 2 cannot open.
+    The last stdout line is the saved PDF (UTF-8). Exit code: 0 saved, 1 closed without saving, 2 cannot open.
     No update check runs here and nothing is shared with a running main window.
     """
     args = list(argv)
@@ -66,7 +77,7 @@ def edit_cli(argv: list[str]) -> int:
         return 2
     src = Path(args[0])
     if not src.is_file():
-        print(f"file not found: {src}", file=sys.stderr)
+        _emit(f"file not found: {src}", sys.stderr)
         return 2
 
     import shutil
@@ -109,7 +120,7 @@ def edit_cli(argv: list[str]) -> int:
                 pdf = work / "doc.pdf"
                 office.to_pdf(src, pdf)
         except Exception as exc:
-            print(f"cannot open {src.name}: {exc}", file=sys.stderr)
+            _emit(f"cannot open {src.name}: {exc}", sys.stderr)
             return 2
         save_to = out if out else src.with_name(src.stem + "_edited.pdf")
         dlg = PdfEditor(None, lambda key, **kw: tr(lang, key, **kw), pdf, save_to, src.name, auto_ocr=scan)
@@ -118,7 +129,7 @@ def edit_cli(argv: list[str]) -> int:
         dlg.exec()
         if not dlg.result:
             return 1
-        print(str(dlg.result))
+        _emit(str(dlg.result))
         return 0
     finally:
         shutil.rmtree(work, ignore_errors=True)
