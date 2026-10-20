@@ -1,4 +1,4 @@
-## v3.5.1
+## v3.5.2
 
 **Русский.** Новый режим `Converter.exe --edit <файл> [--ocr] [--out <результат.pdf>]`: открывает только редактор PDF (без главного окна) для PDF, Word, Excel, PowerPoint и сканов. Путь сохранённого PDF выводится последней строкой; код 0 — сохранено, 1 — закрыто без сохранения. Проверка обновлений в этом режиме отключена.
 
@@ -19,7 +19,7 @@
 **日本語。** 新モード `Converter.exe --edit <ファイル> [--ocr] [--out <結果.pdf>]`:PDF、Word、Excel、PowerPoint、スキャンに対して PDF エディターだけを(メインウィンドウなしで)開きます。保存した PDF のパスは最終行に出力され、終了コード 0 = 保存、1 = 保存せず閉じた。このモードでは更新確認は行いません。
 
 
-v3.5.1 replaces the unpublished v3.5 build: the PDF library is pinned (`pymupdf<2`) so the installer starts correctly. / v3.5.1 заменяет неопубликованную сборку v3.5: библиотека PDF закреплена (`pymupdf<2`), установщик запускается.
+v3.5.2: `--edit` no longer fails when the saved file path has characters the console code page lacks (e.g. a decomposed "й"). / v3.5.2: `--edit` больше не падает, если в пути сохранённого файла есть символы вне кодировки консоли (например, разложенная «й»).
 
 ---
 SHA-256 of `KopiTehnik-Converter-Setup.exe` is in `SHA256SUMS.txt` (check: `certutil -hashfile KopiTehnik-Converter-Setup.exe SHA256`). Built by GitHub Actions from this repository's source; build attestation is attached.
