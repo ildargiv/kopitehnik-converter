@@ -7,6 +7,11 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      publish_tag:
+        description: "Tag whose draft release to publish (empty = only build the artifact)"
+        required: false
+        default: ""
 
 permissions:
   contents: write        # release
@@ -17,7 +22,19 @@ env:
   PYTHONUTF8: "1"
 
 jobs:
+  publish-draft:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish the draft release of the tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.publish_tag }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --notes-file .github/RELEASE_NOTES.md
+
   build:
+    if: github.event_name != 'workflow_dispatch' || inputs.publish_tag == ''
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
