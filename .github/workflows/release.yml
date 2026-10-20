@@ -1,7 +1,7 @@
 name: Release build
 
-# Tag v3.1 -> builds the installer on GitHub's servers from the public source and creates a DRAFT release
-# with KopiTehnik-Converter-Setup.exe and SHA256SUMS.txt. The draft is published by hand.
+# Tag v3.1 -> builds the installer on GitHub's servers from the public source and publishes a release
+# with KopiTehnik-Converter-Setup.exe and SHA256SUMS.txt. The text comes from .github/RELEASE_NOTES.md.
 # Run by hand (Actions -> Release build -> Run workflow) to get the files as a build artifact only.
 on:
   push:
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write        # draft release
+  contents: write        # release
   id-token: write        # build provenance
   attestations: write
 
@@ -60,16 +60,13 @@ jobs:
             dist/KopiTehnik-Converter-Setup.exe
             dist/SHA256SUMS.txt
 
-      - name: Draft release
+      - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          draft: true
+          draft: false
           generate_release_notes: true
           files: |
             dist/KopiTehnik-Converter-Setup.exe
             dist/SHA256SUMS.txt
-          body: |
-            SHA-256 of `KopiTehnik-Converter-Setup.exe` is in `SHA256SUMS.txt`
-            (check: `certutil -hashfile KopiTehnik-Converter-Setup.exe SHA256`).
-            The file is built by GitHub Actions from this repository's source; build attestation is attached.
+          body_path: .github/RELEASE_NOTES.md
