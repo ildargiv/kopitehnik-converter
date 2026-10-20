@@ -118,7 +118,14 @@ def edit_cli(argv: list[str]) -> int:
         dlg.exec()
         if not dlg.result:
             return 1
-        print(str(dlg.result))
+        # The path may hold characters the console code page lacks (a decomposed "й" is "и" + U+0306):
+        # print() then raises and the saved file looks like a failure. Write UTF-8 bytes instead.
+        # The windowed exe has no stdout at all when started without a pipe; then there is nothing to write to.
+        out_buf = getattr(sys.stdout, "buffer", None)
+        if out_buf is not None:
+            sys.stdout.flush()
+            out_buf.write((str(dlg.result) + "\n").encode("utf-8"))
+            out_buf.flush()
         return 0
     finally:
         shutil.rmtree(work, ignore_errors=True)
