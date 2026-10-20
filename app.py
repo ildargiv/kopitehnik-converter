@@ -118,7 +118,11 @@ def edit_cli(argv: list[str]) -> int:
         dlg.exec()
         if not dlg.result:
             return 1
-        print(str(dlg.result))
+        # The path may hold characters the console code page lacks (a decomposed "й" is "и" + U+0306):
+        # print() then raises and the saved file looks like a failure. Write UTF-8 bytes instead.
+        sys.stdout.flush()
+        sys.stdout.buffer.write((str(dlg.result) + "\n").encode("utf-8"))
+        sys.stdout.buffer.flush()
         return 0
     finally:
         shutil.rmtree(work, ignore_errors=True)
