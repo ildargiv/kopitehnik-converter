@@ -43,10 +43,92 @@ def _check_updates_quietly(win) -> None:
     checker.start()
 
 
+def edit_cli(argv: list[str]) -> int:
+    """Converter.exe --edit <file> [--ocr] [--out <result.pdf>]: only the PDF editor, no main window.
+
+    The last stdout line is the saved PDF. Exit code: 0 saved, 1 closed without saving, 2 cannot open.
+    No update check runs here and nothing is shared with a running main window.
+    """
+    args = list(argv)
+    ocr_first = "--ocr" in args
+    if ocr_first:
+        args.remove("--ocr")
+    out = None
+    if "--out" in args:
+        i = args.index("--out")
+        if i + 1 >= len(args):
+            print("--out needs a path", file=sys.stderr)
+            return 2
+        out = Path(args[i + 1])
+        del args[i:i + 2]
+    if len(args) != 1:
+        print("usage: Converter.exe --edit <file> [--ocr] [--out <result.pdf>]", file=sys.stderr)
+        return 2
+    src = Path(args[0])
+    if not src.is_file():
+        print(f"file not found: {src}", file=sys.stderr)
+        return 2
+
+    import shutil
+    import tempfile
+
+    from PySide6.QtCore import QSettings
+
+    from core import office
+    from ui.i18n import LANGUAGES, system_language, tr
+    from ui.pdf_editor import PdfEditor
+    from ui.theme import PALETTES, stylesheet
+
+    QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    app = QApplication(sys.argv[:1])
+    app.setOrganizationName("KopiTehnik")
+    app.setApplicationName("KopiTehnik")
+    app.setStyle("Fusion")
+    app.setFont(QFont("Segoe UI", 10))
+    app.setWindowIcon(QIcon(str(BASE / "assets" / "icon.png")))
+    store = QSettings()
+    lang = store.value("lang", system_language())
+    lang = lang if lang in LANGUAGES else "en"
+    theme = store.value("theme", "dark")
+    theme = theme if theme in PALETTES else "dark"
+
+    work = Path(tempfile.mkdtemp(prefix="kt_edit_"))
+    try:
+        ext = src.suffix.lower()
+        scan = ocr_first
+        try:
+            if ext == ".pdf":
+                pdf = src
+            elif ext in (".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"):
+                import pymupdf
+                with pymupdf.open(src) as img:
+                    pdf = work / "scan.pdf"
+                    pdf.write_bytes(img.convert_to_pdf())
+                scan = True
+            else:
+                pdf = work / "doc.pdf"
+                office.to_pdf(src, pdf)
+        except Exception as exc:
+            print(f"cannot open {src.name}: {exc}", file=sys.stderr)
+            return 2
+        save_to = out if out else src.with_name(src.stem + "_edited.pdf")
+        dlg = PdfEditor(None, lambda key, **kw: tr(lang, key, **kw), pdf, save_to, src.name, auto_ocr=scan)
+        dlg.setStyleSheet(stylesheet(PALETTES[theme]))
+        dlg.exec()
+        if not dlg.result:
+            return 1
+        print(str(dlg.result))
+        return 0
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
 def main() -> int:
     if len(sys.argv) >= 2 and sys.argv[1] == "--mcp":
         from core.mcp_server import run   # MCP server for AI agents, speaks JSON over stdin/stdout
         return run()
+    if len(sys.argv) >= 2 and sys.argv[1] == "--edit":
+        return edit_cli(sys.argv[2:])
     if len(sys.argv) == 4 and sys.argv[1] == "--ocr":
         from core import ocr  # Converter.exe --ocr <scanned.pdf> <searchable.pdf>
         ocr.build_pdf(sys.argv[2], sys.argv[3])
