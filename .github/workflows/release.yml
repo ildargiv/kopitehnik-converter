@@ -34,7 +34,7 @@ jobs:
           [ "v$v" = "${GITHUB_REF_NAME}" ] || { echo "Tag ${GITHUB_REF_NAME} but core/version.py has $v"; exit 1; }
 
       - name: Install dependencies
-        run: pip install PySide6 pillow pillow-heif openpyxl pymupdf rapidocr opencv-python pyinstaller
+        run: pip install PySide6 pillow pillow-heif openpyxl "pymupdf<2" rapidocr opencv-python pyinstaller
 
       - name: Build installer
         run: python tools/installer/build.py
