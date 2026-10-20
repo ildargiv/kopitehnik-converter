@@ -362,6 +362,8 @@ class PdfEditor(QDialog):
         self.t = t
         self.save_to = save_to
         self.result: Path | None = None
+        # Set by the window-less ``--edit`` mode: Save always writes the PDF (even unchanged) and leaves no side files.
+        self.standalone = False
         self.items: list[TextItem] = []
         self.images: list[ImageItem] = []
         self.doc = self._open(Path(pdf))
@@ -1499,13 +1501,18 @@ class PdfEditor(QDialog):
     # ------------------------------------------------------------------ save
     def _save(self):
         self._close_inline(True)
-        if not self.changed:
+        if not self.changed and not self.standalone:
             self.reject()
             return
         self.save_to.parent.mkdir(parents=True, exist_ok=True)
         doc = self._final_doc()
         doc.save(self.save_to, garbage=3, deflate=True)
         doc.close()
+        if self.standalone:
+            self.result = self.save_to
+            self.changed = False
+            self.accept()
+            return
         # Keep the page without the added text, so the objects stay editable next time.
         base = self.save_to.with_name(self.save_to.stem + ".base.pdf")
         self.doc.save(base, garbage=3, deflate=True)

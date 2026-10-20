@@ -113,6 +113,7 @@ def edit_cli(argv: list[str]) -> int:
             return 2
         save_to = out if out else src.with_name(src.stem + "_edited.pdf")
         dlg = PdfEditor(None, lambda key, **kw: tr(lang, key, **kw), pdf, save_to, src.name, auto_ocr=scan)
+        dlg.standalone = True
         dlg.setStyleSheet(stylesheet(PALETTES[theme]))
         dlg.exec()
         if not dlg.result:
