@@ -57,7 +57,7 @@ The installer is built by GitHub Actions from the open source ([workflow](.githu
 ## Run from source
 Python 3.10 or newer is required.
 
-    pip install PySide6 pillow pillow-heif openpyxl pymupdf rapidocr opencv-python
+    pip install PySide6 pillow pillow-heif openpyxl "pymupdf<2" rapidocr opencv-python
     python app.py
 
 ## Build the exe
