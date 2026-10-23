@@ -1,5 +1,7 @@
 # КопиТехник Конвертор
 
+[![license](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](https://github.com/ildargiv/kopitehnik-converter/blob/main/LICENSE) [![release](https://img.shields.io/github/v/release/ildargiv/kopitehnik-converter?label=release)](https://github.com/ildargiv/kopitehnik-converter/releases/latest) ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4) ![MCP](https://img.shields.io/badge/MCP-server-6E4AFF)
+
 **Languages:** [English](README.md) · Русский · [Deutsch](README.de.md) · [Español](README.es.md) · [Français](README.fr.md) · [Português](README.pt.md) · [Türkçe](README.tr.md) · [中文](README.zh.md)
 
 **Бесплатная программа для Windows для профессиональной печати в фотоцентрах: пакетная конвертация, цвет, листы для печати, кадрирование мышью, редактор PDF с распознаванием сканов и печать с предпросмотром. Управляется и человеком, и ИИ-агентом.**
