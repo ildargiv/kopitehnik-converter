@@ -1,0 +1,33 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.ildargiv/kopitehnik-converter",
+  "title": "KopiTehnik Converter",
+  "description": "Convert, lay out and print photos on Windows: ICC colour, sheets, PDF, scan OCR.",
+  "repository": {
+    "url": "https://github.com/ildargiv/kopitehnik-converter",
+    "source": "github",
+    "id": "1415421915"
+  },
+  "version": "3.5.2",
+  "websiteUrl": "https://ildargiv.github.io/kopitehnik-converter/",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "kopitehnik-converter-mcp",
+      "version": "3.5.2",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "KOPITEHNIK_CONVERTER_EXE",
+          "description": "Optional full path to Converter.exe if KopiTehnik Converter is installed in a non-standard folder.",
+          "format": "filepath",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}
