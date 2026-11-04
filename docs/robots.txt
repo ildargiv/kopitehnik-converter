@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ildargiv.github.io/kopitehnik-converter/sitemap.xml
